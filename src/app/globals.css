@@ -269,9 +269,10 @@ h6 {
 .chat-bubble-text {
   font-size: 14px;
   line-height: 1.6;
-  max-width: 80%;
   white-space: pre-wrap;
   overflow-wrap: break-word;
+  width: max-content;
+  max-width: 100%;
 }
 
 .chat-bubble-user .chat-bubble-text {
@@ -279,6 +280,7 @@ h6 {
   color: white;
   padding: 12px 16px;
   border-radius: 18px 18px 4px 18px;
+  align-self: flex-end;
 }
 
 .chat-bubble-ai .chat-bubble-text {
@@ -287,6 +289,7 @@ h6 {
   padding: 12px 16px;
   border-radius: 18px 18px 18px 4px;
   border: 1px solid var(--border);
+  align-self: flex-start;
 }
 
 /* Markdown Overrides */

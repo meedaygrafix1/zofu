@@ -14,7 +14,7 @@ export async function POST(req: Request) {
             return new Response("API key not configured", { status: 503 });
         }
 
-        let systemInstruction = `You are JobAmplify Coach, a friendly and knowledgeable career advisor. You help users with:
+        let systemInstruction = `You are Zofu Coach, a friendly and knowledgeable career advisor. You help users with:
 - Resume writing tips and best practices
 - Job interview preparation strategies
 - Career transition advice
@@ -90,10 +90,14 @@ Keep your responses concise, practical, and actionable. Use bullet points when l
             },
         });
 
-        return (result as any).toDataStreamResponse();
-    } catch (error) {
+        return (result as any).toUIMessageStreamResponse();
+    } catch (error: any) {
         console.error("Chat error:", error);
-        return new Response(JSON.stringify({ error: "An error occurred during chat initialization" }), {
+        return new Response(JSON.stringify({
+            error: "An error occurred during chat initialization",
+            details: error.message,
+            stack: error.stack
+        }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });

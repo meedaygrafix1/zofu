@@ -24,7 +24,7 @@ export interface SessionData {
     }[];
 }
 
-const BASE_STORAGE_KEY = "jobamplify_sessions";
+const BASE_STORAGE_KEY = "zofu_sessions";
 
 function generateId(): string {
     return `session_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;

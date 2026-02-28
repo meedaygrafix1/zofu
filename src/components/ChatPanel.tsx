@@ -76,7 +76,7 @@ export default function ChatPanel({ resumeContext, jobContext }: ChatPanelProps)
     };
 
     return (
-        <div className="chat-panel glass-card h-full flex flex-col relative w-full overflow-hidden p-2 lg:p-4">
+        <div className="chat-panel h-full flex flex-col relative w-full overflow-hidden p-2 lg:p-4">
             <div className="chat-panel-body flex-1 overflow-hidden h-full flex flex-col">
                 {/* Messages area */}
                 <div className="chat-messages flex-1 overflow-y-auto w-full px-2 lg:px-4 mb-2">
@@ -88,16 +88,16 @@ export default function ChatPanel({ resumeContext, jobContext }: ChatPanelProps)
                             transition={{ duration: 0.4 }}
                             className="flex flex-col items-center justify-center h-full gap-3 px-2 pt-10"
                         >
-                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#111827] border border-[#111827]/20 shadow-sm">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#111827] border border-[#111827]/20">
                                 <Message01Icon className="h-6 w-6 text-white" strokeWidth={1.5} />
                             </div>
                             <p className="text-[13px] text-muted text-center font-medium">
-                                JobAmplify AI Coach
+                                Zofu AI Coach
                             </p>
                             <p className="text-[12px] text-muted-light text-center leading-relaxed max-w-[200px]">
                                 Ask me anything about your resume, the target job, or interview prep.
                             </p>
-                            <div className="flex flex-col gap-2 w-full mt-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl mt-8">
                                 {STARTER_PROMPTS.map((prompt, i) => (
                                     <motion.button
                                         initial={{ opacity: 0, y: 10 }}
@@ -113,7 +113,7 @@ export default function ChatPanel({ resumeContext, jobContext }: ChatPanelProps)
                                                 }
                                             }, 50);
                                         }}
-                                        className="starter-prompt text-left w-full truncate border border-border shadow-sm hover:border-black/50 hover:shadow-md hover:-translate-y-0.5"
+                                        className="starter-prompt text-left w-full truncate border border-border hover:border-black/20 hover:-translate-y-0.5"
                                     >
                                         {prompt}
                                     </motion.button>
@@ -145,7 +145,7 @@ export default function ChatPanel({ resumeContext, jobContext }: ChatPanelProps)
                                                     const toolName = part.toolName || part.type.replace('tool-', '');
                                                     const isFinished = part.state?.startsWith('output-');
                                                     return (
-                                                        <div key={part.toolCallId || index} className="flex items-center gap-1.5 py-1 px-2.5 rounded-md bg-surface-sunken border border-border/60 shadow-sm text-[11px] text-muted font-mono self-start mt-1 mb-1">
+                                                        <div key={part.toolCallId || index} className="flex items-center gap-1.5 py-1 px-2.5 rounded-md bg-surface-sunken border border-border/60 text-[11px] text-muted font-mono self-start mt-1 mb-1">
                                                             <Settings02Icon className="w-3 h-3 text-primary animate-spin-slow" />
                                                             {!isFinished ?
                                                                 <span>Running {toolName}...</span> :
@@ -161,7 +161,7 @@ export default function ChatPanel({ resumeContext, jobContext }: ChatPanelProps)
                                             {/* (Removed red box to avoid clutter; UI logic will render any text found) */}
 
                                             {/* Text Content */}
-                                            <div className="chat-bubble-text shadow-sm">
+                                            <div className="chat-bubble-text">
                                                 {msg.role === "user" ? (
                                                     // @ts-ignore
                                                     msg.content || (msg.parts && msg.parts.map((p: any) => typeof p === 'string' ? p : (p.text || '')).join('')) || JSON.stringify(msg.parts)
@@ -221,7 +221,7 @@ export default function ChatPanel({ resumeContext, jobContext }: ChatPanelProps)
                 <div className="pt-2 shrink-0 w-full">
                     <form
                         onSubmit={handleFormSubmit}
-                        className="relative flex items-end gap-2 p-2 bg-white/60 backdrop-blur-md border border-border/80 rounded-2xl shadow-sm focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 transition-all duration-200 w-full"
+                        className="relative flex items-end gap-2 p-2 bg-white/60 backdrop-blur-md border border-border/80 rounded-2xl focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 transition-all duration-200 w-full"
                     >
                         <textarea
                             ref={textareaRef}
@@ -238,9 +238,9 @@ export default function ChatPanel({ resumeContext, jobContext }: ChatPanelProps)
                         <button
                             type="submit"
                             disabled={!input.trim() || isLoading}
-                            className="flex shrink-0 items-center justify-center p-2 mb-0.5 rounded-xl bg-[#111827] text-white shadow-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-black transition-all hover:shadow-lg h-[36px] w-[36px] overflow-hidden"
+                            className="flex shrink-0 items-center justify-center p-2 mb-0.5 rounded-xl bg-[#111827] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-black transition-all h-[36px] w-[36px] overflow-hidden"
                         >
-                            <SentIcon className="h-4 w-4 drop-shadow-sm ml-0.5" strokeWidth={2.5} />
+                            <SentIcon className="h-4 w-4 ml-0.5" strokeWidth={2.5} />
                         </button>
                     </form>
                     <div className="flex w-full justify-between items-center px-2 mt-2">

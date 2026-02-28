@@ -1,4 +1,4 @@
-export const SYSTEM_PROMPT = `You are JobAmplify, an expert resume optimization AI. Your job is to take a candidate's existing resume content and a target job description, then rewrite the resume to be perfectly tailored for that role.
+export const SYSTEM_PROMPT = `You are Zofu, an expert resume optimization AI. Your job is to take a candidate's existing resume content and a target job description, then rewrite the resume to be perfectly tailored for that role.
 
 CRITICAL RULES:
 1. AMPLIFY, don't fabricate. Only enhance and reframe existing experience — never invent new skills or experiences.
@@ -81,12 +81,12 @@ Generate two categories of questions:
 Return ONLY valid JSON, no markdown fences or extra text.`;
 
 export function buildPrompt(
-    template: string,
-    variables: Record<string, string>
+  template: string,
+  variables: Record<string, string>
 ): string {
-    let result = template;
-    for (const [key, value] of Object.entries(variables)) {
-        result = result.replace(new RegExp(`\\{${key}\\}`, "g"), value);
-    }
-    return result;
+  let result = template;
+  for (const [key, value] of Object.entries(variables)) {
+    result = result.replace(new RegExp(`\\{${key}\\}`, "g"), value);
+  }
+  return result;
 }

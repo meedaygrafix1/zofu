@@ -1,0 +1,18 @@
+data: {"type":"start"}
+
+data: {"type":"start-step"}
+
+data: {"type":"text-start","id":"0","providerMetadata":{"google":{"thoughtSignature":"ClEBvj72+4bcjMqPVrILuDS9JpsBUBieuariH8d83s1vQibcCa/PlJC5xo9L2CGoufARzmdPK/UvVdTFGtsdyyD3FSEJkC+CpofuIlJ/laUBVUoKhQIBvj72+zjr2g8ESomrBfmLK24eZyudDRask7GsAPnG6t4GTQOMCPcb8LSPjvuaqNSpS1Be53Nr6KuEy3FJTH2Fe0cSn2mckxqbv1zqqjq8iA4Eq8hZDYOkTutptep6uHX3hmOMu7Oqz710DYPwuMl5xZ1+hNnLVw7emrWl9wC9UsCJXFjfhUX28fYwoQYPacle0m3xqwE85dYLbiJW3fitYAY2+YYgCyc/TMmU6Cb1WVvjgrJX91geeo6+1ohvh4OaK4ihAG4/D1P7B08QsxCwcCy3wejW45lEjaToyuDLQmKxkjffBEM0Fy8d3NMKHNgWcRyaH6H9YThVJgtyQ0dS2kAp2vw="}}}
+
+data: {"type":"text-delta","id":"0","delta":"Hello! I'm Job","providerMetadata":{"google":{"thoughtSignature":"ClEBvj72+4bcjMqPVrILuDS9JpsBUBieuariH8d83s1vQibcCa/PlJC5xo9L2CGoufARzmdPK/UvVdTFGtsdyyD3FSEJkC+CpofuIlJ/laUBVUoKhQIBvj72+zjr2g8ESomrBfmLK24eZyudDRask7GsAPnG6t4GTQOMCPcb8LSPjvuaqNSpS1Be53Nr6KuEy3FJTH2Fe0cSn2mckxqbv1zqqjq8iA4Eq8hZDYOkTutptep6uHX3hmOMu7Oqz710DYPwuMl5xZ1+hNnLVw7emrWl9wC9UsCJXFjfhUX28fYwoQYPacle0m3xqwE85dYLbiJW3fitYAY2+YYgCyc/TMmU6Cb1WVvjgrJX91geeo6+1ohvh4OaK4ihAG4/D1P7B08QsxCwcCy3wejW45lEjaToyuDLQmKxkjffBEM0Fy8d3NMKHNgWcRyaH6H9YThVJgtyQ0dS2kAp2vw="}}}
+
+data: {"type":"text-delta","id":"0","delta":"Amplify Coach, your AI career advisor. How can I assist you today with your career journey? I can help with resume writing, interview prep, career transitions, salary negotiation, job search strategies, and professional development.","providerMetadata":{"google":{"thoughtSignature":"ClEBvj72+4bcjMqPVrILuDS9JpsBUBieuariH8d83s1vQibcCa/PlJC5xo9L2CGoufARzmdPK/UvVdTFGtsdyyD3FSEJkC+CpofuIlJ/laUBVUoKhQIBvj72+zjr2g8ESomrBfmLK24eZyudDRask7GsAPnG6t4GTQOMCPcb8LSPjvuaqNSpS1Be53Nr6KuEy3FJTH2Fe0cSn2mckxqbv1zqqjq8iA4Eq8hZDYOkTutptep6uHX3hmOMu7Oqz710DYPwuMl5xZ1+hNnLVw7emrWl9wC9UsCJXFjfhUX28fYwoQYPacle0m3xqwE85dYLbiJW3fitYAY2+YYgCyc/TMmU6Cb1WVvjgrJX91geeo6+1ohvh4OaK4ihAG4/D1P7B08QsxCwcCy3wejW45lEjaToyuDLQmKxkjffBEM0Fy8d3NMKHNgWcRyaH6H9YThVJgtyQ0dS2kAp2vw="}}}
+
+data: {"type":"text-end","id":"0"}
+
+data: {"type":"finish-step"}
+
+data: {"type":"finish","finishReason":"stop"}
+
+data: [DONE]
+

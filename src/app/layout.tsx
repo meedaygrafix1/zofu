@@ -13,11 +13,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "JobAmplify — AI Resume Optimizer",
+  title: "Zofu — AI Resume Optimizer",
   description:
     "Amplify your resume for any job description. AI-powered ATS optimization, keyword matching, and interview preparation.",
   openGraph: {
-    title: "JobAmplify — AI Resume Optimizer",
+    title: "Zofu — AI Resume Optimizer",
     description:
       "Amplify your resume for any job description. AI-powered ATS optimization, keyword matching, and interview preparation.",
     type: "website",

@@ -14,6 +14,8 @@ import {
 } from "hugeicons-react";
 import { SessionData } from "@/hooks/useSessionHistory";
 import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 interface SidebarProps {
     sessions: SessionData[];
@@ -25,8 +27,6 @@ interface SidebarProps {
     jobContext?: string;
     isOpen: boolean;
     onToggle: () => void;
-    onChatToggle: () => void;
-    isChatActive: boolean;
     onLogoutClick: () => void;
 }
 
@@ -38,11 +38,14 @@ export default function Sidebar({
     onDeleteSession,
     isOpen,
     onToggle,
-    onChatToggle,
-    isChatActive,
     onLogoutClick,
 }: SidebarProps) {
+    const pathname = usePathname();
     const [searchQuery, setSearchQuery] = useState("");
+
+    const isOverviewPath = pathname === "/app";
+    const isOptimizerPath = pathname?.startsWith("/app/amplify");
+    const isCoachPath = pathname?.startsWith("/app/coach");
 
     const handleNewSessionClick = () => {
         onNewSession();
@@ -82,9 +85,9 @@ export default function Sidebar({
                 {/* Workspace Switcher */}
                 <div className="p-4 pt-6 lg:pt-4">
                     <div className="flex items-center p-2 pl-3 bg-transparent rounded-xl">
-                        <div className="flex items-center">
+                        <Link href="/app" className="flex items-center block">
                             <img src="/zofu-logo.png" alt="Zofu Logo" className="h-7 w-auto object-contain" />
-                        </div>
+                        </Link>
                     </div>
                 </div>
 
@@ -110,20 +113,36 @@ export default function Sidebar({
                     <div className="mb-6">
                         <div className="px-3 mb-2 text-[11px] font-bold text-[#9ca3af]">Workspace</div>
                         <div className="space-y-1">
-                            <button
-                                onClick={handleNewSessionClick}
-                                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${!isChatActive && !activeSessionId ? 'bg-[#e5e7eb] text-[#111827] font-semibold' : 'text-[#4b5563] hover:bg-[#f3f4f6] hover:text-[#111827] font-medium'}`}
+                            <Link href="/app"
+                                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${isOverviewPath ? 'bg-[#e5e7eb] text-[#111827] font-semibold' : 'text-[#4b5563] hover:bg-[#f3f4f6] hover:text-[#111827] font-medium'}`}
                             >
-                                <Home01Icon className={`h-4.5 w-4.5 ${!isChatActive && !activeSessionId ? 'text-[#111827]' : 'text-[#6b7280]'}`} />
-                                Dashboard
-                            </button>
-                            <button
-                                onClick={onChatToggle}
-                                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${isChatActive ? 'bg-[#e5e7eb] text-[#111827] font-semibold' : 'text-[#4b5563] hover:bg-[#f3f4f6] hover:text-[#111827] font-medium'}`}
+                                <Home01Icon className={`h-4.5 w-4.5 ${isOverviewPath ? 'text-[#111827]' : 'text-[#6b7280]'}`} />
+                                Overview
+                            </Link>
+
+                            <Link
+                                href="/app/amplify"
+                                onClick={() => {
+                                    if (window.innerWidth < 1024) onToggle();
+                                }}
+                                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${isOptimizerPath ? 'bg-[#e5e7eb] text-[#111827] font-semibold' : 'text-[#4b5563] hover:bg-[#f3f4f6] hover:text-[#111827] font-medium'}`}
                             >
-                                <SparklesIcon className={`h-4.5 w-4.5 ${isChatActive ? 'text-[#111827]' : 'text-[#6b7280]'}`} />
-                                AI Coach
-                            </button>
+                                <SparklesIcon className={`h-4.5 w-4.5 ${isOptimizerPath ? 'text-[#111827]' : 'text-[#6b7280]'}`} />
+                                Optimizer
+                            </Link>
+
+                            <Link
+                                href="/app/coach"
+                                onClick={() => {
+                                    if (window.innerWidth < 1024) onToggle();
+                                }}
+                                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isCoachPath ? 'bg-[#e5e7eb] text-[#111827] font-semibold' : 'text-[#4b5563] hover:bg-[#f3f4f6] hover:text-[#111827] font-medium'}`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <FlashIcon className={`h-4.5 w-4.5 ${isCoachPath ? 'text-[#111827]' : 'text-[#6b7280]'}`} />
+                                    AI Coach
+                                </div>
+                            </Link>
                         </div>
                     </div>
 
@@ -137,13 +156,16 @@ export default function Sidebar({
                                 </p>
                             ) : (
                                 filteredSessions.map((session) => (
-                                    <button
+                                    <Link
                                         key={session.id}
-                                        onClick={() => handleLoadSessionClick(session.id)}
-                                        className={`w-full group flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${!isChatActive && session.id === activeSessionId ? 'bg-[#e5e7eb] text-[#111827] font-semibold' : 'text-[#4b5563] hover:bg-[#f3f4f6] hover:text-[#111827] font-medium'}`}
+                                        href={`/app/amplify?session=${session.id}`}
+                                        onClick={() => {
+                                            if (window.innerWidth < 1024) onToggle();
+                                        }}
+                                        className={`w-full group flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${session.id === activeSessionId && isOptimizerPath ? 'bg-[#e5e7eb] text-[#111827] font-semibold' : 'text-[#4b5563] hover:bg-[#f3f4f6] hover:text-[#111827] font-medium'}`}
                                     >
                                         <div className="flex items-center gap-3 min-w-0 pr-2">
-                                            <File01Icon className={`h-4.5 w-4.5 shrink-0 ${!isChatActive && session.id === activeSessionId ? 'text-[#111827]' : 'text-[#6b7280]'}`} />
+                                            <File01Icon className={`h-4.5 w-4.5 shrink-0 ${session.id === activeSessionId && isOptimizerPath ? 'text-[#111827]' : 'text-[#6b7280]'}`} />
                                             <span className="truncate">{session.title}</span>
                                         </div>
 
@@ -154,7 +176,7 @@ export default function Sidebar({
                                                 </div>
                                             )}
                                         </div>
-                                    </button>
+                                    </Link>
                                 ))
                             )}
                         </div>

@@ -193,7 +193,7 @@ export async function chatWithCoach(
 ): Promise<string> {
     const client = getClient();
 
-    let systemInstruction = `You are JobAmplify Coach, a friendly and knowledgeable career advisor. You help users with:
+    let systemInstruction = `You are Zofu Coach, a friendly and knowledgeable career advisor. You help users with:
 - Resume writing tips and best practices
 - Job interview preparation strategies
 - Career transition advice
