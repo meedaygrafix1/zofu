@@ -1,0 +1,1 @@
+﻿src/app/api/chat/route.ts(36,13): error TS2741: Property 'defaultObjectGenerationMode' is missing in type 'LanguageModelV3' but required in type 'LanguageModelV1'.
