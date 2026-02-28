@@ -52,8 +52,8 @@ export default function AuthPage() {
                         data: {
                             full_name: name,
                         },
-                        // Crucial for email link routing
-                        emailRedirectTo: `${window.location.origin}/auth/callback`,
+                        // Crucial for email link routing: add ?next=/auth so they go back to the login screen
+                        emailRedirectTo: `${window.location.origin}/auth/callback?next=/auth`,
                     }
                 });
 
