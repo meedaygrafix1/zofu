@@ -14,26 +14,11 @@ import ResumePreview from "@/components/ResumePreview";
 import ATSScoreCard from "@/components/ATSScoreCard";
 import KeywordChecklist from "@/components/KeywordChecklist";
 import InterviewPrep from "@/components/InterviewPrep";
-import { useSessionHistory } from "@/hooks/useSessionHistory";
+import { useOptimizer } from "@/context/OptimizerContext";
 
-interface Keywords {
-  found: string[];
-  missing: string[];
-  added: string[];
-}
+// Keyword interfaces moved to context and API types
 
-interface Change {
-  section: string;
-  original: string;
-  amplified: string;
-  reason: string;
-}
-
-interface InterviewQuestion {
-  question: string;
-  context: string;
-  suggestedPoints: string[];
-}
+// Change & InterviewQuestion interfaces moved to context and API types
 
 function SessionLoader({ onLoad, onReset }: { onLoad: (id: string) => void, onReset: () => void }) {
   const searchParams = useSearchParams();
@@ -51,41 +36,20 @@ function SessionLoader({ onLoad, onReset }: { onLoad: (id: string) => void, onRe
 }
 
 export default function Home() {
-  // Input state
-  const [resumeText, setResumeText] = useState("");
-  const [resumeFileName, setResumeFileName] = useState("");
-  const [jobDescription, setJobDescription] = useState("");
-
-  // Processing state
-  const [isAmplifying, setIsAmplifying] = useState(false);
-  const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Result state
-  const [amplifiedText, setAmplifiedText] = useState("");
-  const [atsScore, setAtsScore] = useState<number | null>(null);
-  const [keywords, setKeywords] = useState<Keywords | null>(null);
-  const [changes, setChanges] = useState<Change[]>([]);
-  const [behavioralQuestions, setBehavioralQuestions] = useState<
-    InterviewQuestion[]
-  >([]);
-  const [technicalQuestions, setTechnicalQuestions] = useState<
-    InterviewQuestion[]
-  >([]);
+  const {
+    resumeText, setJobDescription, jobDescription,
+    isAmplifying, isGeneratingQuestions, error,
+    amplifiedText, setAmplifiedText, atsScore, setAtsScore, keywords, setKeywords, changes, setChanges,
+    behavioralQuestions, technicalQuestions,
+    hasResume, hasJD, canAmplify, hasResults, currentStep,
+    resetAll, handleFileProcessed, handleAmplify, handleGenerateQuestions,
+    handleNewSession, handleLoadSession,
+    sessions, activeSessionId, deleteSession
+  } = useOptimizer();
 
   // Layout state
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-
-  // Custom hooks
-  const {
-    sessions,
-    activeSessionId,
-    saveSession,
-    loadSession,
-    deleteSession,
-    newSession,
-  } = useSessionHistory();
 
   const handleSignOut = async () => {
     const { createClient } = await import('@/utils/supabase/client');
@@ -94,145 +58,6 @@ export default function Home() {
     window.location.href = '/auth';
   };
 
-  // Derived state
-  const hasResume = resumeText.length > 0;
-  const hasJD = jobDescription.length > 0;
-  const canAmplify = hasResume && hasJD && !isAmplifying;
-  const hasResults = amplifiedText.length > 0;
-
-  const currentStep = !hasResume ? 0 : !hasJD ? 1 : !hasResults ? 2 : 3;
-
-  const resetAll = useCallback(() => {
-    setResumeText("");
-    setResumeFileName("");
-    setJobDescription("");
-    setAmplifiedText("");
-    setAtsScore(null);
-    setKeywords(null);
-    setChanges([]);
-    setBehavioralQuestions([]);
-    setTechnicalQuestions([]);
-    setError(null);
-  }, []);
-
-  const handleNewSession = useCallback(() => {
-    // Only reset if we're not loading from a parameter (which handles its own flow)
-    resetAll();
-    newSession();
-    setSidebarOpen(false);
-  }, [resetAll, newSession]);
-
-  const handleLoadSession = useCallback(
-    (id: string) => {
-      const session = loadSession(id);
-      if (session) {
-        setResumeText(session.resumeText);
-        setResumeFileName(session.resumeFileName);
-        setJobDescription(session.jobDescription);
-        setAmplifiedText(session.amplifiedText);
-        setAtsScore(session.atsScore);
-        setKeywords(session.keywords);
-        setChanges(session.changes);
-        setBehavioralQuestions([]);
-        setTechnicalQuestions([]);
-        setError(null);
-        setSidebarOpen(false);
-      }
-    },
-    [loadSession]
-  );
-
-  const handleFileProcessed = useCallback(
-    (text: string, fileName: string) => {
-      setResumeText(text);
-      setResumeFileName(fileName);
-      if (!text) {
-        setAmplifiedText("");
-        setAtsScore(null);
-        setKeywords(null);
-        setChanges([]);
-        setBehavioralQuestions([]);
-        setTechnicalQuestions([]);
-      }
-    },
-    []
-  );
-
-  const handleAmplify = async () => {
-    if (!canAmplify) return;
-
-    setIsAmplifying(true);
-    setError(null);
-
-    try {
-      const response = await fetch("/api/amplify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeText, jobDescription }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || data.error || "Amplification failed");
-      }
-
-      setAmplifiedText(data.amplifiedResume || "");
-      setAtsScore(data.atsScore ?? null);
-      setKeywords(data.keywords || null);
-      setChanges(data.changes || []);
-
-      // Auto-save session
-      const newSessionId = saveSession({
-        resumeText,
-        resumeFileName,
-        jobDescription,
-        amplifiedText: data.amplifiedResume || "",
-        atsScore: data.atsScore ?? null,
-        keywords: data.keywords || null,
-        changes: data.changes || [],
-      });
-
-      // Update the URL without triggering a page reload so we stay on the results
-      const currentUrl = new URL(window.location.href);
-      currentUrl.searchParams.set("session", newSessionId);
-      window.history.replaceState({}, "", currentUrl.toString());
-
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setIsAmplifying(false);
-    }
-  };
-
-  const handleGenerateQuestions = async () => {
-    if (!hasResults) return;
-
-    setIsGeneratingQuestions(true);
-
-    try {
-      const response = await fetch("/api/interview-questions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeText, jobDescription }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || data.error || "Failed to generate");
-      }
-
-      setBehavioralQuestions(data.behavioral || []);
-      setTechnicalQuestions(data.technical || []);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to generate questions"
-      );
-    } finally {
-      setIsGeneratingQuestions(false);
-    }
-  };
 
   return (
     <div className="flex min-h-screen bg-background text-foreground font-sans">

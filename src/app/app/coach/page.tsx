@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Logout01Icon, FlashIcon } from "hugeicons-react";
 import Sidebar from "@/components/Sidebar";
 import ChatPanel from "@/components/ChatPanel";
-import { useSessionHistory } from "@/hooks/useSessionHistory";
+import { useOptimizer } from "@/context/OptimizerContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -19,8 +19,9 @@ export default function CoachPage() {
         sessions,
         activeSessionId,
         deleteSession,
-        loadSession,
-    } = useSessionHistory();
+        resumeText,
+        jobDescription,
+    } = useOptimizer();
 
     const handleSignOut = async () => {
         const { createClient } = await import('@/utils/supabase/client');
@@ -37,16 +38,9 @@ export default function CoachPage() {
         router.push(`/app/amplify?session=${id}`);
     };
 
-    // Grab context from the active session if it exists
-    let resumeContext = "";
-    let jobContext = "";
-    if (activeSessionId) {
-        const session = loadSession(activeSessionId);
-        if (session) {
-            resumeContext = session.resumeText;
-            jobContext = session.jobDescription;
-        }
-    }
+    // State is already preserved in Context
+    const resumeContext = resumeText;
+    const jobContext = jobDescription;
 
     return (
         <div className="flex min-h-screen bg-background text-foreground font-sans">

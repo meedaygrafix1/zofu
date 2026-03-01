@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Logout01Icon, Rocket02Icon, SparklesIcon, File01Icon, Time01Icon } from "hugeicons-react";
 import Sidebar from "@/components/Sidebar";
-import { useSessionHistory } from "@/hooks/useSessionHistory";
+import { useOptimizer } from "@/context/OptimizerContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -18,7 +18,7 @@ export default function DashboardOverview() {
         sessions,
         activeSessionId,
         deleteSession,
-    } = useSessionHistory();
+    } = useOptimizer();
 
     const handleSignOut = async () => {
         const { createClient } = await import('@/utils/supabase/client');
