@@ -80,17 +80,17 @@ export function useSessionHistory() {
     const [isInitialized, setIsInitialized] = useState(false);
     const supabaseRef = useRef(createClient());
 
-    // Fetch active user
+    // Fetch active user — use getUser() for server-verified identity
     useEffect(() => {
         async function fetchUser() {
             try {
                 const supabase = supabaseRef.current;
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session?.user?.id) {
-                    setUserId(session.user.id);
+                const { data: { user }, error } = await supabase.auth.getUser();
+                if (user?.id && !error) {
+                    setUserId(user.id);
                 }
             } catch (err) {
-                console.error("Failed to fetch user session", err);
+                console.error("Failed to fetch user", err);
             } finally {
                 setIsInitialized(true);
             }
