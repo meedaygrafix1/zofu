@@ -174,7 +174,7 @@ export function OptimizerProvider({ children }: { children: ReactNode }) {
             setKeywords(data.keywords || null);
             setChanges(data.changes || []);
 
-            const newSessionId = saveSession({
+            const newSessionId = await saveSession({
                 resumeText,
                 resumeFileName,
                 jobDescription,

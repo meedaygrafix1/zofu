@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { createClient } from "@/utils/supabase/client";
 
 export interface SessionData {
     id: string;
@@ -31,7 +32,6 @@ function generateId(): string {
 }
 
 function extractTitle(jd: string): string {
-    // Try to extract a job title from the first meaningful line
     const lines = jd.trim().split("\n").filter(Boolean);
     if (lines.length > 0) {
         const firstLine = lines[0].trim();
@@ -40,20 +40,52 @@ function extractTitle(jd: string): string {
     return "Untitled Session";
 }
 
+// Convert a SessionData object to a Supabase row
+function toRow(session: SessionData, userId: string) {
+    return {
+        id: session.id,
+        user_id: userId,
+        title: session.title,
+        created_at: session.timestamp,
+        resume_text: session.resumeText,
+        resume_file_name: session.resumeFileName,
+        job_description: session.jobDescription,
+        amplified_text: session.amplifiedText,
+        ats_score: session.atsScore,
+        keywords: session.keywords,
+        changes: session.changes,
+    };
+}
+
+// Convert a Supabase row to a SessionData object
+function fromRow(row: Record<string, unknown>): SessionData {
+    return {
+        id: row.id as string,
+        title: row.title as string,
+        timestamp: row.created_at as number,
+        resumeText: row.resume_text as string,
+        resumeFileName: row.resume_file_name as string,
+        jobDescription: row.job_description as string,
+        amplifiedText: row.amplified_text as string,
+        atsScore: (row.ats_score as number) ?? null,
+        keywords: (row.keywords as SessionData["keywords"]) ?? null,
+        changes: (row.changes as SessionData["changes"]) ?? [],
+    };
+}
+
 export function useSessionHistory() {
     const [sessions, setSessions] = useState<SessionData[]>([]);
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
     const [userId, setUserId] = useState<string | null>(null);
     const [isInitialized, setIsInitialized] = useState(false);
+    const supabaseRef = useRef(createClient());
 
-    // Fetch active user to namespace storage tightly
+    // Fetch active user
     useEffect(() => {
         async function fetchUser() {
             try {
-                const { createClient } = await import('@/utils/supabase/client');
-                const supabase = createClient();
+                const supabase = supabaseRef.current;
                 const { data: { session } } = await supabase.auth.getSession();
-
                 if (session?.user?.id) {
                     setUserId(session.user.id);
                 }
@@ -68,36 +100,67 @@ export function useSessionHistory() {
 
     const storageKey = userId ? `${BASE_STORAGE_KEY}_${userId}` : null;
 
-    // Load sessions from localStorage only after user is known
+    // Load sessions from Supabase (primary) with localStorage fallback
     useEffect(() => {
-        if (!isInitialized || !storageKey) return;
+        if (!isInitialized || !userId || !storageKey) return;
 
-        try {
-            const stored = localStorage.getItem(storageKey);
-            if (stored) {
-                setSessions(JSON.parse(stored));
+        let cancelled = false;
+
+        async function loadSessions() {
+            const supabase = supabaseRef.current;
+            const key = storageKey!;
+
+            try {
+                const { data, error } = await supabase
+                    .from("sessions")
+                    .select("*")
+                    .order("created_at", { ascending: false })
+                    .limit(20);
+
+                if (!cancelled && data && !error) {
+                    const loaded = data.map(fromRow);
+                    setSessions(loaded);
+                    // Update localStorage cache
+                    try {
+                        localStorage.setItem(key, JSON.stringify(loaded));
+                    } catch { /* ignore */ }
+                    return;
+                }
+
+                if (error) {
+                    console.error("Failed to load sessions from Supabase, falling back to localStorage", error);
+                }
+            } catch (err) {
+                console.error("Supabase fetch error, falling back to localStorage", err);
             }
-            // Explicitly force a fresh dashboard on initial load
-            setActiveSessionId(null);
-        } catch {
-            // Ignore parse errors
+
+            // Fallback: load from localStorage
+            if (!cancelled) {
+                try {
+                    const stored = localStorage.getItem(key);
+                    if (stored) {
+                        setSessions(JSON.parse(stored));
+                    }
+                } catch { /* ignore */ }
+            }
         }
-    }, [isInitialized, storageKey]);
 
-    // Persist sessions to user-specific localStorage key
-    const persist = useCallback((updated: SessionData[]) => {
+        loadSessions();
+        setActiveSessionId(null);
+
+        return () => { cancelled = true; };
+    }, [isInitialized, userId, storageKey]);
+
+    // Persist to localStorage cache
+    const persistLocal = useCallback((updated: SessionData[]) => {
         if (!storageKey) return;
-
-        setSessions(updated);
         try {
             localStorage.setItem(storageKey, JSON.stringify(updated));
-        } catch {
-            // Storage full, ignore
-        }
+        } catch { /* ignore */ }
     }, [storageKey]);
 
     const saveSession = useCallback(
-        (data: Omit<SessionData, "id" | "title" | "timestamp">): string => {
+        async (data: Omit<SessionData, "id" | "title" | "timestamp">): Promise<string> => {
             const id = activeSessionId || generateId();
             const session: SessionData = {
                 ...data,
@@ -109,13 +172,27 @@ export function useSessionHistory() {
             const updated = [
                 session,
                 ...sessions.filter((s) => s.id !== id),
-            ].slice(0, 20); // Keep max 20 sessions
+            ].slice(0, 20);
 
-            persist(updated);
+            setSessions(updated);
+            persistLocal(updated);
             setActiveSessionId(id);
+
+            // Persist to Supabase
+            if (userId) {
+                try {
+                    const supabase = supabaseRef.current;
+                    await supabase
+                        .from("sessions")
+                        .upsert(toRow(session, userId), { onConflict: "id" });
+                } catch (err) {
+                    console.error("Failed to save session to Supabase", err);
+                }
+            }
+
             return id;
         },
-        [sessions, activeSessionId, persist]
+        [sessions, activeSessionId, persistLocal, userId]
     );
 
     const loadSession = useCallback(
@@ -128,12 +205,23 @@ export function useSessionHistory() {
     );
 
     const deleteSession = useCallback(
-        (id: string) => {
+        async (id: string) => {
             const updated = sessions.filter((s) => s.id !== id);
-            persist(updated);
+            setSessions(updated);
+            persistLocal(updated);
             if (activeSessionId === id) setActiveSessionId(null);
+
+            // Delete from Supabase
+            if (userId) {
+                try {
+                    const supabase = supabaseRef.current;
+                    await supabase.from("sessions").delete().eq("id", id);
+                } catch (err) {
+                    console.error("Failed to delete session from Supabase", err);
+                }
+            }
         },
-        [sessions, activeSessionId, persist]
+        [sessions, activeSessionId, persistLocal, userId]
     );
 
     const newSession = useCallback(() => {
