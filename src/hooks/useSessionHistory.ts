@@ -86,14 +86,11 @@ export function useSessionHistory() {
             try {
                 const supabase = supabaseRef.current;
                 const { data: { user }, error } = await supabase.auth.getUser();
-                console.log("[ZOFU DEBUG] getUser result:", { userId: user?.id, error: error?.message });
                 if (user?.id && !error) {
                     setUserId(user.id);
-                } else {
-                    console.warn("[ZOFU DEBUG] No user found or error — sessions will use localStorage only");
                 }
             } catch (err) {
-                console.error("[ZOFU DEBUG] Failed to fetch user", err);
+                console.error("Failed to fetch user", err);
             } finally {
                 setIsInitialized(true);
             }
@@ -120,8 +117,6 @@ export function useSessionHistory() {
                     .order("created_at", { ascending: false })
                     .limit(20);
 
-                console.log("[ZOFU DEBUG] Load sessions from Supabase:", { rowCount: data?.length, error: error?.message, errorCode: error?.code });
-
                 if (!cancelled && data && !error) {
                     const loaded = data.map(fromRow);
                     setSessions(loaded);
@@ -133,10 +128,10 @@ export function useSessionHistory() {
                 }
 
                 if (error) {
-                    console.error("[ZOFU DEBUG] Failed to load sessions from Supabase, falling back to localStorage", error);
+                    console.error("Failed to load sessions from Supabase, falling back to localStorage", error);
                 }
             } catch (err) {
-                console.error("[ZOFU DEBUG] Supabase fetch error, falling back to localStorage", err);
+                console.error("Supabase fetch error, falling back to localStorage", err);
             }
 
             // Fallback: load from localStorage
@@ -191,15 +186,11 @@ export function useSessionHistory() {
                         .from("sessions")
                         .upsert(toRow(session, userId), { onConflict: "id" });
                     if (upsertError) {
-                        console.error("[ZOFU DEBUG] Supabase upsert FAILED:", upsertError.message, upsertError.code, upsertError.details);
-                    } else {
-                        console.log("[ZOFU DEBUG] Session saved to Supabase successfully, id:", id);
+                        console.error("Failed to save session to Supabase:", upsertError.message);
                     }
                 } catch (err) {
-                    console.error("[ZOFU DEBUG] Failed to save session to Supabase", err);
+                    console.error("Failed to save session to Supabase", err);
                 }
-            } else {
-                console.warn("[ZOFU DEBUG] No userId — session only saved to localStorage");
             }
 
             return id;
