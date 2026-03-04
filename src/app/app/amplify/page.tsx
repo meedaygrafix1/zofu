@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, Suspense } from "react";
+import { useState, useCallback, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,12 +23,15 @@ import { useOptimizer } from "@/context/OptimizerContext";
 function SessionLoader({ onLoad, onReset }: { onLoad: (id: string) => void, onReset: () => void }) {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session");
+  const initializedRef = useRef(false);
 
   useEffect(() => {
     if (sessionId) {
       onLoad(sessionId);
-    } else {
+      initializedRef.current = true;
+    } else if (!initializedRef.current) {
       onReset();
+      initializedRef.current = true;
     }
   }, [sessionId, onLoad, onReset]);
 
