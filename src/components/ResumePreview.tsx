@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Copy01Icon, CheckmarkCircle01Icon, EyeIcon, GitCompareIcon, File01Icon } from "hugeicons-react";
 
@@ -28,11 +28,399 @@ export default function ResumePreview({
         "amplified"
     );
     const [copied, setCopied] = useState(false);
+    const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+    const [isDownloading, setIsDownloading] = useState<string | null>(null);
+    const downloadMenuRef = useRef<HTMLDivElement>(null);
+
+    // Close dropdown on click outside
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (downloadMenuRef.current && !downloadMenuRef.current.contains(event.target as Node)) {
+                setShowDownloadMenu(false);
+            }
+        }
+        if (showDownloadMenu) {
+            document.addEventListener("mousedown", handleClickOutside);
+            return () => document.removeEventListener("mousedown", handleClickOutside);
+        }
+    }, [showDownloadMenu]);
 
     const copyToClipboard = async () => {
         await navigator.clipboard.writeText(amplifiedText);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+    };
+
+    const downloadAsPDF = async () => {
+        setIsDownloading("pdf");
+        try {
+            const { default: jsPDF } = await import("jspdf");
+            const doc = new jsPDF({ unit: "mm", format: "a4" });
+
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 15;
+            const usableWidth = pageWidth - margin * 2;
+            const bottomMargin = 15;
+
+            // Parse markdown bold: splits text into segments of {text, bold}
+            const parseBoldSegments = (text: string) => {
+                const segments: { text: string; bold: boolean }[] = [];
+                const regex = /\*\*(.+?)\*\*/g;
+                let lastIndex = 0;
+                let match;
+                while ((match = regex.exec(text)) !== null) {
+                    if (match.index > lastIndex) {
+                        segments.push({ text: text.slice(lastIndex, match.index), bold: false });
+                    }
+                    segments.push({ text: match[1], bold: true });
+                    lastIndex = regex.lastIndex;
+                }
+                if (lastIndex < text.length) {
+                    segments.push({ text: text.slice(lastIndex), bold: false });
+                }
+                return segments.length > 0 ? segments : [{ text, bold: false }];
+            };
+
+            // Render a line with inline bold segments in jsPDF
+            const renderRichLine = (text: string, x: number, y: number, fontSize: number, baseFontStyle: string = "normal") => {
+                const segments = parseBoldSegments(text);
+                let cursorX = x;
+                doc.setFontSize(fontSize);
+                for (const seg of segments) {
+                    doc.setFont("helvetica", seg.bold ? "bold" : baseFontStyle);
+                    doc.text(seg.text, cursorX, y);
+                    cursorX += doc.getTextWidth(seg.text);
+                }
+                doc.setFont("helvetica", baseFontStyle);
+            };
+
+            // Strip bold markers for width calculation / wrapping
+            const stripBold = (text: string) => text.replace(/\*\*(.+?)\*\*/g, '$1');
+
+            const rawLines = amplifiedText.split("\n");
+
+            // Heuristic detectors
+            const isSectionHeader = (line: string) => {
+                const trimmed = line.trim();
+                if (!trimmed) return false;
+                // ALL-CAPS words (at least 2 chars), possibly with separators like | or :
+                if (/^[A-Z][A-Z &/|,\-:]{2,}$/.test(trimmed)) return true;
+                // Common resume headers
+                if (/^(EXPERIENCE|EDUCATION|SKILLS|SUMMARY|OBJECTIVE|PROJECTS|CERTIFICATIONS?|ACHIEVEMENTS?|AWARDS?|LANGUAGES?|INTERESTS?|PROFESSIONAL EXPERIENCE|WORK EXPERIENCE|TECHNICAL SKILLS|CORE COMPETENCIES|PROFESSIONAL SUMMARY|CAREER SUMMARY|VOLUNTEER|REFERENCES|PUBLICATIONS)$/i.test(trimmed)) return true;
+                return false;
+            };
+
+            const isBullet = (line: string) => /^\s*[•\-\*▪◦–■❖→✓⬥]\s/.test(line);
+            const isContactLine = (line: string) => {
+                const trimmed = line.trim();
+                // Contains email, phone, URL, or pipe-separated contact info
+                return /[@]/.test(trimmed) || /\b\d{3}[\s\-.)]{0,2}\d{3}[\s\-.)]{0,2}\d{4}\b/.test(trimmed) ||
+                    /\b(linkedin|github|portfolio|www\.)\b/i.test(trimmed) ||
+                    (/[|•·,]/.test(trimmed) && trimmed.length < 120 && /@/.test(trimmed));
+            };
+            const isSubHeader = (line: string) => {
+                const trimmed = stripBold(line.trim());
+                // Mixed case with a date pattern or pipe/dash separator, often "Company Name | Role | Date"
+                if (/\b(20\d{2}|19\d{2})\b/.test(trimmed) && trimmed.length < 100) return true;
+                // Bold-style sub-headers: starts uppercase, short, no bullet
+                if (/^[A-Z][a-zA-Z\s&,.\-]+$/.test(trimmed) && trimmed.length < 60 && !isBullet(line) && !isSectionHeader(line)) return true;
+                return false;
+            };
+
+            // Extract date portion from a sub-header line for right-alignment
+            const extractDate = (text: string) => {
+                // Match patterns like "Jan 2020 – Present", "2020 - 2023", "May 2019 – Dec 2021"
+                const dateRegex = /((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*\d{4}\s*[–\-—]\s*(Present|(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*\d{4})|\d{4}\s*[–\-—]\s*(Present|\d{4}))/i;
+                const match = text.match(dateRegex);
+                if (match) {
+                    const dateStr = match[0].trim();
+                    const rest = text.replace(match[0], '').replace(/\s*[|,–\-—]\s*$/, '').replace(/^\s*[|,–\-—]\s*/, '').trim();
+                    return { title: rest, date: dateStr };
+                }
+                return { title: text, date: '' };
+            };
+
+            let cursorY = margin;
+            const addPageIfNeeded = (spaceNeeded: number) => {
+                if (cursorY + spaceNeeded > pageHeight - bottomMargin) {
+                    doc.addPage();
+                    cursorY = margin;
+                }
+            };
+
+            rawLines.forEach((rawLine, index) => {
+                const trimmed = rawLine.trim();
+
+                // Empty line — small spacing
+                if (!trimmed) {
+                    cursorY += 2;
+                    return;
+                }
+
+                // First non-empty line = Name
+                if (index === 0 || (index <= 2 && !isContactLine(rawLine) && !isSectionHeader(rawLine) && !isBullet(rawLine) && rawLine.trim().length < 50 && rawLines.slice(0, index).every(l => !l.trim()))) {
+                    addPageIfNeeded(10);
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(18);
+                    doc.setTextColor(26, 54, 93); // Dark navy
+                    doc.text(stripBold(trimmed), pageWidth / 2, cursorY, { align: "center" });
+                    doc.setTextColor(0, 0, 0);
+                    cursorY += 8;
+                    return;
+                }
+
+                // Contact info line (email, phone, linkedin, etc.)
+                if (isContactLine(rawLine) && index <= 5) {
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(8.5);
+                    doc.setTextColor(70, 70, 70);
+                    const wrappedLines = doc.splitTextToSize(stripBold(trimmed), usableWidth) as string[];
+                    for (const wl of wrappedLines) {
+                        addPageIfNeeded(4.5);
+                        doc.text(wl, pageWidth / 2, cursorY, { align: "center" });
+                        cursorY += 4.5;
+                    }
+                    doc.setTextColor(0, 0, 0);
+                    return;
+                }
+
+                // Section header (EXPERIENCE, EDUCATION, etc.)
+                if (isSectionHeader(rawLine)) {
+                    cursorY += 3.5; // extra space before section
+                    addPageIfNeeded(10);
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(11);
+                    doc.setTextColor(26, 54, 93); // Dark navy
+                    doc.text(stripBold(trimmed).toUpperCase(), margin, cursorY);
+                    doc.setTextColor(0, 0, 0);
+                    cursorY += 1.2;
+                    // Draw a thin line under the header
+                    doc.setDrawColor(26, 54, 93);
+                    doc.setLineWidth(0.4);
+                    doc.line(margin, cursorY, pageWidth - margin, cursorY);
+                    cursorY += 4;
+                    return;
+                }
+
+                // Sub-header (Company, Role, Dates) — dates right-aligned
+                if (isSubHeader(rawLine) && index > 3) {
+                    cursorY += 1.5;
+                    addPageIfNeeded(7);
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(10);
+                    const { title, date } = extractDate(stripBold(trimmed));
+                    if (date) {
+                        // Title left, date right
+                        renderRichLine(title, margin, cursorY, 10, "bold");
+                        doc.setFont("helvetica", "normal");
+                        doc.setFontSize(9.5);
+                        doc.text(date, pageWidth - margin, cursorY, { align: "right" });
+                    } else {
+                        renderRichLine(stripBold(trimmed), margin, cursorY, 10, "bold");
+                    }
+                    cursorY += 5;
+                    return;
+                }
+
+                // Bullet point
+                if (isBullet(rawLine)) {
+                    addPageIfNeeded(5);
+                    const bulletIndent = 4;
+                    const textIndent = bulletIndent + 3.5;
+                    const bulletText = trimmed.replace(/^[•\-\*▪◦–■❖→✓⬥]\s*/, "");
+
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(9.5);
+
+                    // Draw bullet
+                    doc.text("•", margin + bulletIndent, cursorY);
+
+                    // Wrap the bullet text
+                    const wrappedLines = doc.splitTextToSize(stripBold(bulletText), usableWidth - textIndent) as string[];
+                    for (const wl of wrappedLines) {
+                        addPageIfNeeded(4.5);
+                        renderRichLine(wl, margin + textIndent, cursorY, 9.5);
+                        cursorY += 4.5;
+                    }
+                    return;
+                }
+
+                // Regular body text
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(9.5);
+                const wrappedLines = doc.splitTextToSize(stripBold(trimmed), usableWidth) as string[];
+                for (const wl of wrappedLines) {
+                    addPageIfNeeded(4.5);
+                    renderRichLine(wl, margin, cursorY, 9.5);
+                    cursorY += 4.5;
+                }
+            });
+
+            doc.save("amplified-resume.pdf");
+        } catch (err) {
+            console.error("PDF generation failed:", err);
+        } finally {
+            setIsDownloading(null);
+            setShowDownloadMenu(false);
+        }
+    };
+
+    const downloadAsDOCX = async () => {
+        setIsDownloading("docx");
+        try {
+            const { Document, Paragraph, TextRun, Packer, HeadingLevel, AlignmentType, BorderStyle, TabStopPosition, TabStopType } = await import("docx");
+            const { saveAs } = await import("file-saver");
+
+            const rawLines = amplifiedText.split("\n");
+
+            const stripBoldDocx = (text: string) => text.replace(/\*\*(.+?)\*\*/g, '$1');
+
+            const isSectionHeader = (line: string) => {
+                const t = stripBoldDocx(line.trim());
+                if (!t) return false;
+                if (/^[A-Z][A-Z &/|,\-:]{2,}$/.test(t)) return true;
+                if (/^(EXPERIENCE|EDUCATION|SKILLS|SUMMARY|OBJECTIVE|PROJECTS|CERTIFICATIONS?|ACHIEVEMENTS?|AWARDS?|LANGUAGES?|INTERESTS?|PROFESSIONAL EXPERIENCE|WORK EXPERIENCE|TECHNICAL SKILLS|CORE COMPETENCIES|PROFESSIONAL SUMMARY|CAREER SUMMARY|VOLUNTEER|REFERENCES|PUBLICATIONS)$/i.test(t)) return true;
+                return false;
+            };
+            const isBullet = (line: string) => /^\s*[•\-\*▪◦–■❖→✓⬥]\s/.test(line);
+            const isContactLine = (line: string) => {
+                const t = line.trim();
+                return /[@]/.test(t) || /\b\d{3}[\s\-.)]{0,2}\d{3}[\s\-.)]{0,2}\d{4}\b/.test(t) ||
+                    /\b(linkedin|github|portfolio|www\.)\b/i.test(t);
+            };
+            const isSubHeaderDocx = (line: string) => {
+                const t = stripBoldDocx(line.trim());
+                if (/\b(20\d{2}|19\d{2})\b/.test(t) && t.length < 100) return true;
+                if (/^[A-Z][a-zA-Z\s&,.\-]+$/.test(t) && t.length < 60 && !isBullet(line) && !isSectionHeader(line)) return true;
+                return false;
+            };
+            const extractDateDocx = (text: string) => {
+                const dateRegex = /((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*\d{4}\s*[–\-—]\s*(Present|(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*\d{4})|\d{4}\s*[–\-—]\s*(Present|\d{4}))/i;
+                const match = text.match(dateRegex);
+                if (match) {
+                    const dateStr = match[0].trim();
+                    const rest = text.replace(match[0], '').replace(/\s*[|,–\-—]\s*$/, '').replace(/^\s*[|,–\-—]\s*/, '').trim();
+                    return { title: rest, date: dateStr };
+                }
+                return { title: text, date: '' };
+            };
+
+            // Parse markdown bold into TextRun array for DOCX
+            const makeTextRuns = (text: string, baseFont: string = "Calibri", baseSize: number = 21, baseBold: boolean = false, color?: string) => {
+                const runs: InstanceType<typeof TextRun>[] = [];
+                const regex = /\*\*(.+?)\*\*/g;
+                let lastIndex = 0;
+                let match;
+                while ((match = regex.exec(text)) !== null) {
+                    if (match.index > lastIndex) {
+                        runs.push(new TextRun({ text: text.slice(lastIndex, match.index), font: baseFont, size: baseSize, bold: baseBold, ...(color ? { color } : {}) }));
+                    }
+                    runs.push(new TextRun({ text: match[1], font: baseFont, size: baseSize, bold: true, ...(color ? { color } : {}) }));
+                    lastIndex = regex.lastIndex;
+                }
+                if (lastIndex < text.length) {
+                    runs.push(new TextRun({ text: text.slice(lastIndex), font: baseFont, size: baseSize, bold: baseBold, ...(color ? { color } : {}) }));
+                }
+                return runs.length > 0 ? runs : [new TextRun({ text, font: baseFont, size: baseSize, bold: baseBold, ...(color ? { color } : {}) })];
+            };
+
+            const paragraphs: InstanceType<typeof Paragraph>[] = [];
+
+            rawLines.forEach((rawLine, index) => {
+                const trimmed = rawLine.trim();
+
+                if (!trimmed) {
+                    paragraphs.push(new Paragraph({ spacing: { after: 60 } }));
+                    return;
+                }
+
+                // Name (first line)
+                if (index === 0) {
+                    paragraphs.push(new Paragraph({
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 20 },
+                        children: makeTextRuns(trimmed, "Calibri", 32, true, "1A365D"),
+                    }));
+                    return;
+                }
+
+                // Contact info
+                if (isContactLine(rawLine) && index <= 5) {
+                    paragraphs.push(new Paragraph({
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 20 },
+                        children: makeTextRuns(trimmed, "Calibri", 18, false, "555555"),
+                    }));
+                    return;
+                }
+
+                // Section header
+                if (isSectionHeader(rawLine)) {
+                    paragraphs.push(new Paragraph({
+                        heading: HeadingLevel.HEADING_2,
+                        spacing: { before: 180, after: 60 },
+                        border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: "1A365D", space: 1 } },
+                        children: [new TextRun({ text: stripBoldDocx(trimmed).toUpperCase(), bold: true, font: "Calibri", size: 22, color: "1A365D" })],
+                    }));
+                    return;
+                }
+
+                // Sub-header (Company, Role, Dates) — dates right-aligned via tab stop
+                if (isSubHeaderDocx(rawLine) && index > 3) {
+                    const { title, date } = extractDateDocx(stripBoldDocx(trimmed));
+                    const children = date
+                        ? [
+                            new TextRun({ text: title, bold: true, font: "Calibri", size: 21 }),
+                            new TextRun({ text: "\t", font: "Calibri", size: 21 }),
+                            new TextRun({ text: date, font: "Calibri", size: 19 }),
+                        ]
+                        : makeTextRuns(trimmed, "Calibri", 21, true);
+                    paragraphs.push(new Paragraph({
+                        spacing: { before: 80, after: 20 },
+                        tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }],
+                        children,
+                    }));
+                    return;
+                }
+
+                // Bullet point
+                if (isBullet(rawLine)) {
+                    const bulletText = trimmed.replace(/^[•\-\*▪◦–■❖→✓⬥]\s*/, "");
+                    paragraphs.push(new Paragraph({
+                        bullet: { level: 0 },
+                        spacing: { after: 20 },
+                        children: makeTextRuns(bulletText, "Calibri", 21),
+                    }));
+                    return;
+                }
+
+                // Regular text
+                paragraphs.push(new Paragraph({
+                    spacing: { after: 20 },
+                    children: makeTextRuns(trimmed, "Calibri", 21),
+                }));
+            });
+
+            const doc = new Document({
+                sections: [{
+                    properties: {
+                        page: {
+                            margin: { top: 720, bottom: 720, left: 720, right: 720 },
+                        },
+                    },
+                    children: paragraphs,
+                }],
+            });
+
+            const blob = await Packer.toBlob(doc);
+            saveAs(blob, "amplified-resume.docx");
+        } catch (err) {
+            console.error("DOCX generation failed:", err);
+        } finally {
+            setIsDownloading(null);
+            setShowDownloadMenu(false);
+        }
     };
 
     if (isLoading) {
@@ -103,18 +491,95 @@ export default function ResumePreview({
                 </div>
 
                 {amplifiedText && (
-                    <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        onClick={copyToClipboard}
-                        className="flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-lg px-3 py-2 sm:py-1.5 text-sm sm:text-xs font-medium bg-white border border-border text-foreground shadow-sm hover:bg-surface-sunken sm:bg-transparent sm:border-transparent sm:shadow-none sm:text-muted sm:hover:bg-surface-sunken sm:hover:text-foreground transition-all"
-                    >
-                        {copied ? (
-                            <CheckmarkCircle01Icon className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-success sm:text-success" />
-                        ) : (
-                            <Copy01Icon className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
-                        )}
-                        {copied ? "Copied to Clipboard!" : "Copy to Clipboard"}
-                    </motion.button>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        {/* Copy Button */}
+                        <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            onClick={copyToClipboard}
+                            className="flex flex-1 sm:flex-none items-center justify-center gap-1.5 rounded-lg px-3 py-2 sm:py-1.5 text-sm sm:text-xs font-medium bg-white border border-border text-foreground shadow-sm hover:bg-surface-sunken sm:bg-transparent sm:border-transparent sm:shadow-none sm:text-muted sm:hover:bg-surface-sunken sm:hover:text-foreground transition-all"
+                        >
+                            {copied ? (
+                                <CheckmarkCircle01Icon className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-success" />
+                            ) : (
+                                <Copy01Icon className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                            )}
+                            <span className="sm:hidden">{copied ? "Copied!" : "Copy"}</span>
+                            <span className="hidden sm:inline">{copied ? "Copied!" : "Copy"}</span>
+                        </motion.button>
+
+                        {/* Download Dropdown */}
+                        <div className="relative" ref={downloadMenuRef}>
+                            <motion.button
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                                className="flex flex-1 sm:flex-none items-center justify-center gap-1.5 rounded-lg px-3 py-2 sm:py-1.5 text-sm sm:text-xs font-medium bg-primary text-white shadow-sm hover:bg-primary/90 transition-all"
+                            >
+                                <svg className="h-4 w-4 sm:h-3.5 sm:w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                    <polyline points="7 10 12 15 17 10" />
+                                    <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
+                                Download
+                                <svg className={`h-3 w-3 transition-transform ${showDownloadMenu ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                            </motion.button>
+
+                            <AnimatePresence>
+                                {showDownloadMenu && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -4, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: -4, scale: 0.95 }}
+                                        transition={{ duration: 0.15 }}
+                                        className="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl border border-border shadow-lg z-50 overflow-hidden"
+                                    >
+                                        <button
+                                            onClick={downloadAsPDF}
+                                            disabled={isDownloading !== null}
+                                            className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-surface-sunken transition-colors disabled:opacity-50"
+                                        >
+                                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-600">
+                                                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                    <polyline points="14 2 14 8 20 8" />
+                                                    <line x1="16" y1="13" x2="8" y2="13" />
+                                                    <line x1="16" y1="17" x2="8" y2="17" />
+                                                    <polyline points="10 9 9 9 8 9" />
+                                                </svg>
+                                            </span>
+                                            <div className="text-left">
+                                                <div>{isDownloading === "pdf" ? "Generating..." : "Download as PDF"}</div>
+                                                <div className="text-[10px] text-muted font-normal">Best for printing</div>
+                                            </div>
+                                        </button>
+
+                                        <div className="border-t border-border/50" />
+
+                                        <button
+                                            onClick={downloadAsDOCX}
+                                            disabled={isDownloading !== null}
+                                            className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-surface-sunken transition-colors disabled:opacity-50"
+                                        >
+                                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                                                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                    <polyline points="14 2 14 8 20 8" />
+                                                    <line x1="16" y1="13" x2="8" y2="13" />
+                                                    <line x1="16" y1="17" x2="8" y2="17" />
+                                                    <polyline points="10 9 9 9 8 9" />
+                                                </svg>
+                                            </span>
+                                            <div className="text-left">
+                                                <div>{isDownloading === "docx" ? "Generating..." : "Download as DOCX"}</div>
+                                                <div className="text-[10px] text-muted font-normal">Editable in Word / Docs</div>
+                                            </div>
+                                        </button>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </div>
                 )}
             </div>
 
