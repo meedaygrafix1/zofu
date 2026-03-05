@@ -89,6 +89,7 @@ export interface AmplifyResult {
         reason: string;
     }[];
     summary: string;
+    coverLetter: string;
 }
 
 export interface InterviewQuestion {

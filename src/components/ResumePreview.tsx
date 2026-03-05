@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Copy01Icon, CheckmarkCircle01Icon, EyeIcon, GitCompareIcon, File01Icon } from "hugeicons-react";
+import { Copy01Icon, CheckmarkCircle01Icon, EyeIcon, GitCompareIcon, File01Icon, File02Icon } from "hugeicons-react";
 
 interface Change {
     section: string;
@@ -14,6 +14,7 @@ interface Change {
 interface ResumePreviewProps {
     originalText: string;
     amplifiedText: string;
+    coverLetter?: string;
     changes: Change[];
     isLoading: boolean;
 }
@@ -21,10 +22,11 @@ interface ResumePreviewProps {
 export default function ResumePreview({
     originalText,
     amplifiedText,
+    coverLetter,
     changes,
     isLoading,
 }: ResumePreviewProps) {
-    const [viewMode, setViewMode] = useState<"amplified" | "diff" | "original">(
+    const [viewMode, setViewMode] = useState<"amplified" | "diff" | "original" | "coverLetter">(
         "amplified"
     );
     const [copied, setCopied] = useState(false);
@@ -45,8 +47,11 @@ export default function ResumePreview({
         }
     }, [showDownloadMenu]);
 
+    const textToCopy = viewMode === "coverLetter" ? coverLetter || "" : amplifiedText;
+    const textToDownload = viewMode === "coverLetter" ? coverLetter || "" : amplifiedText;
+
     const copyToClipboard = async () => {
-        await navigator.clipboard.writeText(amplifiedText);
+        await navigator.clipboard.writeText(textToCopy);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
@@ -98,7 +103,7 @@ export default function ResumePreview({
             // Strip bold markers for width calculation / wrapping
             const stripBold = (text: string) => text.replace(/\*\*(.+?)\*\*/g, '$1');
 
-            const rawLines = amplifiedText.split("\n");
+            const rawLines = textToDownload.split("\n");
 
             // Heuristic detectors
             const isSectionHeader = (line: string) => {
@@ -272,7 +277,7 @@ export default function ResumePreview({
             const { Document, Paragraph, TextRun, Packer, HeadingLevel, AlignmentType, BorderStyle, TabStopPosition, TabStopType } = await import("docx");
             const { saveAs } = await import("file-saver");
 
-            const rawLines = amplifiedText.split("\n");
+            const rawLines = textToDownload.split("\n");
 
             const stripBoldDocx = (text: string) => text.replace(/\*\*(.+?)\*\*/g, '$1');
 
@@ -470,6 +475,7 @@ export default function ResumePreview({
                 <div className="flex flex-wrap items-center gap-1 rounded-lg bg-surface-sunken p-1 w-full sm:w-auto">
                     {[
                         { id: "amplified" as const, label: "Amplified", icon: File01Icon },
+                        { id: "coverLetter" as const, label: "Cover Letter", icon: File02Icon },
                         { id: "diff" as const, label: "Changes", icon: GitCompareIcon },
                         { id: "original" as const, label: "Original", icon: EyeIcon },
                     ].map(({ id, label, icon: Icon }) => (
@@ -596,6 +602,20 @@ export default function ResumePreview({
                         >
                             <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
                                 {amplifiedText || originalText}
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {viewMode === "coverLetter" && coverLetter && (
+                        <motion.div
+                            key="coverLetter"
+                            initial={{ opacity: 0, x: 10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -10 }}
+                            className="prose prose-sm max-w-none"
+                        >
+                            <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                                {coverLetter}
                             </div>
                         </motion.div>
                     )}

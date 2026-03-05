@@ -30,6 +30,9 @@ interface OptimizerContextType {
     jobDescription: string;
     setJobDescription: (text: string) => void;
 
+    coverLetter: string;
+    setCoverLetter: (text: string) => void;
+
     isAmplifying: boolean;
     isGeneratingQuestions: boolean;
     error: string | null;
@@ -70,6 +73,7 @@ export function OptimizerProvider({ children }: { children: ReactNode }) {
     const [resumeText, setResumeText] = useState("");
     const [resumeFileName, setResumeFileName] = useState("");
     const [jobDescription, setJobDescription] = useState("");
+    const [coverLetter, setCoverLetter] = useState("");
 
     const [isAmplifying, setIsAmplifying] = useState(false);
     const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false);
@@ -94,13 +98,14 @@ export function OptimizerProvider({ children }: { children: ReactNode }) {
     const hasResume = resumeText.length > 0;
     const hasJD = jobDescription.length > 0;
     const canAmplify = hasResume && hasJD && !isAmplifying;
-    const hasResults = amplifiedText.length > 0;
+    const hasResults = amplifiedText.length > 0 || coverLetter.length > 0;
     const currentStep = !hasResume ? 0 : !hasJD ? 1 : !hasResults ? 2 : 3;
 
     const resetAll = useCallback(() => {
         setResumeText("");
         setResumeFileName("");
         setJobDescription("");
+        setCoverLetter("");
         setAmplifiedText("");
         setAtsScore(null);
         setKeywords(null);
@@ -122,6 +127,7 @@ export function OptimizerProvider({ children }: { children: ReactNode }) {
                 setResumeText(session.resumeText);
                 setResumeFileName(session.resumeFileName);
                 setJobDescription(session.jobDescription);
+                setCoverLetter(session.coverLetter || "");
                 setAmplifiedText(session.amplifiedText);
                 setAtsScore(session.atsScore);
                 setKeywords(session.keywords);
@@ -139,6 +145,7 @@ export function OptimizerProvider({ children }: { children: ReactNode }) {
             setResumeText(text);
             setResumeFileName(fileName);
             if (!text) {
+                setCoverLetter("");
                 setAmplifiedText("");
                 setAtsScore(null);
                 setKeywords(null);
@@ -169,6 +176,7 @@ export function OptimizerProvider({ children }: { children: ReactNode }) {
                 throw new Error(data.message || data.error || "Amplification failed");
             }
 
+            setCoverLetter(data.coverLetter || "");
             setAmplifiedText(data.amplifiedResume || "");
             setAtsScore(data.atsScore ?? null);
             setKeywords(data.keywords || null);
@@ -178,6 +186,7 @@ export function OptimizerProvider({ children }: { children: ReactNode }) {
                 resumeText,
                 resumeFileName,
                 jobDescription,
+                coverLetter: data.coverLetter || "",
                 amplifiedText: data.amplifiedResume || "",
                 atsScore: data.atsScore ?? null,
                 keywords: data.keywords || null,
@@ -232,6 +241,7 @@ export function OptimizerProvider({ children }: { children: ReactNode }) {
             resumeText, setResumeText,
             resumeFileName, setResumeFileName,
             jobDescription, setJobDescription,
+            coverLetter, setCoverLetter,
             isAmplifying, isGeneratingQuestions,
             error, setError,
             amplifiedText, setAmplifiedText,

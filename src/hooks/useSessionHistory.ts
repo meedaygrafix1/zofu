@@ -10,6 +10,7 @@ export interface SessionData {
     resumeText: string;
     resumeFileName: string;
     jobDescription: string;
+    coverLetter: string;
     amplifiedText: string;
     atsScore: number | null;
     keywords: {
@@ -50,6 +51,7 @@ function toRow(session: SessionData, userId: string) {
         resume_text: session.resumeText,
         resume_file_name: session.resumeFileName,
         job_description: session.jobDescription,
+        cover_letter: session.coverLetter,
         amplified_text: session.amplifiedText,
         ats_score: session.atsScore,
         keywords: session.keywords,
@@ -66,6 +68,7 @@ function fromRow(row: Record<string, unknown>): SessionData {
         resumeText: row.resume_text as string,
         resumeFileName: row.resume_file_name as string,
         jobDescription: row.job_description as string,
+        coverLetter: (row.cover_letter as string) || "",
         amplifiedText: row.amplified_text as string,
         atsScore: (row.ats_score as number) ?? null,
         keywords: (row.keywords as SessionData["keywords"]) ?? null,

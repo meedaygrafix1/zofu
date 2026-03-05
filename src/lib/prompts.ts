@@ -22,6 +22,7 @@ export const AMPLIFY_PROMPT = `Analyze the following resume and job description.
 3. Rewrite Experience bullet points to mirror JD language and quantify achievements.
 4. Ensure the top keywords from the JD are naturally woven into the content.
 5. Suggest any missing skills that should be added to a Skills section.
+6. Draft a compelling, personalized cover letter based on the resume and job description. Keep it concise (3-4 paragraphs), highlight the most relevant achievements, and use an engaging professional tone.
 
 ## Required Output Format (JSON):
 {
@@ -40,7 +41,8 @@ export const AMPLIFY_PROMPT = `Analyze the following resume and job description.
       "reason": "Why this change was made"
     }
   ],
-  "summary": "Brief explanation of what was changed and why"
+  "summary": "Brief explanation of what was changed and why",
+  "coverLetter": "The drafted cover letter text"
 }
 
 Return ONLY valid JSON, no markdown fences or extra text.`;

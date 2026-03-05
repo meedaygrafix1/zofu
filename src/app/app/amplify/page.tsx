@@ -42,7 +42,7 @@ export default function Home() {
   const {
     resumeText, setJobDescription, jobDescription,
     isAmplifying, isGeneratingQuestions, error,
-    amplifiedText, setAmplifiedText, atsScore, setAtsScore, keywords, setKeywords, changes, setChanges,
+    amplifiedText, setAmplifiedText, coverLetter, atsScore, setAtsScore, keywords, setKeywords, changes, setChanges,
     behavioralQuestions, technicalQuestions,
     hasResume, hasJD, canAmplify, hasResults, currentStep,
     resetAll, handleFileProcessed, handleAmplify, handleGenerateQuestions,
@@ -222,6 +222,7 @@ export default function Home() {
                   <ResumePreview
                     originalText={resumeText}
                     amplifiedText={amplifiedText}
+                    coverLetter={coverLetter}
                     changes={changes}
                     isLoading={isAmplifying}
                   />
