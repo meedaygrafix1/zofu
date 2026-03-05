@@ -11,6 +11,7 @@ import {
   BotIcon,
   UserIcon
 } from "hugeicons-react";
+import { HeroDashboardMockup } from "@/components/HeroDashboardMockup";
 
 export default function LandingPage() {
   return (
@@ -31,7 +32,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/auth"
-              className="bg-foreground text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-black transition-transform hover:scale-105"
+              className="bg-foreground text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-black transition-transform hover:scale-105 inline-flex items-center justify-center h-9"
             >
               Start Free
             </Link>
@@ -82,35 +83,19 @@ export default function LandingPage() {
             >
               <Link
                 href="/auth"
-                className="w-full sm:w-[280px] px-8 py-4 rounded-full bg-foreground text-white font-semibold text-lg hover:bg-black transition-all shadow-lg shadow-black/10 hover:shadow-black/20 hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                className="w-full sm:w-[280px] h-14 px-8 rounded-full bg-foreground text-white font-semibold text-lg hover:bg-black transition-all shadow-lg shadow-black/10 hover:shadow-black/20 hover:-translate-y-0.5 flex items-center justify-center gap-2"
               >
                 Try for Free
               </Link>
               <Link
                 href="#how-it-works"
-                className="w-full sm:w-[280px] px-8 py-4 rounded-full bg-white text-foreground border-2 border-border font-semibold text-lg hover:bg-surface-sunken hover:border-foreground/20 transition-all flex items-center justify-center"
+                className="w-full sm:w-[280px] h-14 px-8 rounded-full bg-white text-foreground border-2 border-border font-semibold text-lg hover:bg-surface-sunken hover:border-foreground/20 transition-all flex items-center justify-center"
               >
                 See How It Works
               </Link>
             </motion.div>
 
-            {/* Hero Visual Mockup */}
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.7 }}
-              className="mt-20 relative mx-auto max-w-5xl rounded-2xl glass-card overflow-hidden border border-border/50 shadow-2xl p-2 bg-white/50 backdrop-blur-xl"
-            >
-              <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-accent/5 opacity-50 pointer-events-none" />
-              <img
-                src="/zofu-hero-preview.png"
-                alt="ZOFU Interface"
-                className="w-full h-auto rounded-xl shadow-sm border border-border/30 opacity-90"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            </motion.div>
+            <HeroDashboardMockup />
           </div>
         </section>
 
@@ -141,9 +126,9 @@ export default function LandingPage() {
                 <div className="absolute -right-12 -top-12 opacity-5 scale-150 group-hover:opacity-10 transition-opacity">
                   <FlashIcon size={200} />
                 </div>
+                <FlashIcon className="w-8 h-8 text-primary mb-4" />
                 <div>
-                  <FlashIcon className="w-8 h-8 text-primary mb-4" />
-                  <h3 className="text-2xl font-bold mb-2">Precision Matching</h3>
+                  <h3 className="text-xl font-bold mb-2">Precision Matching</h3>
                   <p className="text-muted max-w-md">Instantly maps your existing skills to the exact "must-haves" found in the target job description.</p>
                 </div>
               </div>
@@ -153,7 +138,7 @@ export default function LandingPage() {
                 <CheckmarkBadge01Icon className="w-8 h-8 text-success mb-4 group-hover:scale-110 transition-transform" />
                 <div>
                   <h3 className="text-xl font-bold mb-2">ATS Injection</h3>
-                  <p className="text-sm text-muted">Naturally weaves in vital keywords without forced "keyword stuffing".</p>
+                  <p className="text-muted">Naturally weaves in vital keywords without forced "keyword stuffing".</p>
                 </div>
               </div>
 
@@ -162,7 +147,7 @@ export default function LandingPage() {
                 <SparklesIcon className="w-8 h-8 text-accent mb-4 group-hover:scale-110 transition-transform" />
                 <div>
                   <h3 className="text-xl font-bold mb-2">Quantified Impact</h3>
-                  <p className="text-sm text-muted">Automatically turns "I did X" into "I achieved [Metric] by doing X".</p>
+                  <p className="text-muted">Automatically turns "I did X" into "I achieved [Metric] by doing X".</p>
                 </div>
               </div>
 
@@ -173,7 +158,7 @@ export default function LandingPage() {
                 </div>
                 <Message01Icon className="w-8 h-8 text-warning mb-4" />
                 <div>
-                  <h3 className="text-2xl font-bold mb-2">Actionable Interview Prep</h3>
+                  <h3 className="text-xl font-bold mb-2">Actionable Interview Prep</h3>
                   <p className="text-muted max-w-md">Generates custom behavioral and technical questions tailored directly to the intersection of your resume and the job.</p>
                 </div>
               </div>
@@ -223,9 +208,9 @@ export default function LandingPage() {
               </p>
               <Link
                 href="/auth"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-foreground font-semibold rounded-full hover:bg-white/90 transition-colors"
+                className="inline-flex items-center justify-center gap-2 h-14 px-8 bg-white text-foreground font-semibold text-lg rounded-full hover:bg-white/90 transition-colors"
               >
-                Try the AI Coach <BotIcon className="w-4 h-4" />
+                Try the AI Coach <BotIcon className="w-5 h-5" />
               </Link>
             </div>
             <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-6 space-y-4 z-10 w-full relative">
@@ -259,7 +244,7 @@ export default function LandingPage() {
               <div className="pt-4">
                 <Link
                   href="/auth"
-                  className="inline-flex px-8 py-4 rounded-full bg-foreground text-white font-semibold text-lg hover:bg-black transition-transform hover:scale-105 shadow-xl shadow-black/10"
+                  className="inline-flex items-center justify-center h-14 px-8 rounded-full bg-foreground text-white font-semibold text-lg hover:bg-black transition-transform hover:scale-105 shadow-xl shadow-black/10"
                 >
                   Start Your First Amplification
                 </Link>
