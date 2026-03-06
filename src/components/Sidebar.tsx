@@ -11,6 +11,7 @@ import {
     Search01Icon,
     CheckmarkBadge01Icon,
     Logout01Icon,
+    Delete02Icon,
 } from "hugeicons-react";
 import { SessionData } from "@/hooks/useSessionHistory";
 import { useState } from "react";
@@ -28,6 +29,75 @@ interface SidebarProps {
     isOpen: boolean;
     onToggle: () => void;
     onLogoutClick: () => void;
+}
+
+interface SwipeableSessionItemProps {
+    session: SessionData;
+    activeSessionId: string | null;
+    isOptimizerPath: boolean;
+    onToggle: () => void;
+    onDeleteSession: (id: string) => void;
+}
+
+function SwipeableSessionItem({ session, activeSessionId, isOptimizerPath, onToggle, onDeleteSession }: SwipeableSessionItemProps) {
+    // Only enable swipe on touch devices (mobile/tablet)
+    const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
+    return (
+        <div className="relative group/session overflow-hidden">
+            {/* Delete Background (Revealed on swipe) */}
+            <div className="absolute inset-y-0 right-0 w-16 bg-danger/10 text-danger flex items-center justify-center rounded-r-lg">
+                <Delete02Icon className="h-5 w-5" strokeWidth={2} />
+            </div>
+
+            {/* Swipeable Container */}
+            <motion.div
+                drag={isTouchDevice ? "x" : false}
+                dragConstraints={{ left: -64, right: 0 }}
+                dragElastic={0.1}
+                whileDrag={{ scale: 0.98 }}
+                onDragEnd={(e, info) => {
+                    if (info.offset.x < -40) {
+                        onDeleteSession(session.id);
+                    }
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors relative z-10 bg-[#f9fafb] ${session.id === activeSessionId && isOptimizerPath ? 'bg-[#e5e7eb] text-[#111827] font-semibold' : 'text-[#4b5563] hover:bg-[#f3f4f6] hover:text-[#111827] font-medium'} pr-8 md:pr-3 md:group-hover/session:pr-8`}
+            >
+                <Link
+                    href={`/app/amplify?session=${session.id}`}
+                    onClick={() => {
+                        if (window.innerWidth < 1024) onToggle();
+                    }}
+                    className="flex-1 flex items-center gap-3 min-w-0 pr-2"
+                >
+                    <File01Icon className={`h-4.5 w-4.5 shrink-0 ${session.id === activeSessionId && isOptimizerPath ? 'text-[#111827]' : 'text-[#6b7280]'}`} />
+                    <span className="truncate">{session.title}</span>
+                </Link>
+
+                <div className={`flex items-center gap-2 shrink-0 md:group-hover/session:hidden ${session.atsScore !== null ? '' : ''}`}>
+                    {session.atsScore !== null && (
+                        <div className="flex items-center justify-center h-5 px-1.5 bg-[#111827] rounded-full text-[10px] font-bold text-white shadow-sm">
+                            {session.atsScore}
+                        </div>
+                    )}
+                </div>
+            </motion.div>
+
+            {/* Desktop Delete Button (Hover) */}
+            <button
+                onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onDeleteSession(session.id);
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 hidden md:group-hover/session:flex items-center justify-center h-6 w-6 rounded hover:bg-danger/10 text-[#9ca3af] hover:text-danger z-20 transition-colors cursor-pointer"
+                title="Delete session"
+                aria-label="Delete session"
+            >
+                <Delete02Icon className="h-4 w-4" strokeWidth={2} />
+            </button>
+        </div>
+    );
 }
 
 export default function Sidebar({
@@ -156,27 +226,14 @@ export default function Sidebar({
                                 </p>
                             ) : (
                                 filteredSessions.map((session) => (
-                                    <Link
+                                    <SwipeableSessionItem
                                         key={session.id}
-                                        href={`/app/amplify?session=${session.id}`}
-                                        onClick={() => {
-                                            if (window.innerWidth < 1024) onToggle();
-                                        }}
-                                        className={`w-full group flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${session.id === activeSessionId && isOptimizerPath ? 'bg-[#e5e7eb] text-[#111827] font-semibold' : 'text-[#4b5563] hover:bg-[#f3f4f6] hover:text-[#111827] font-medium'}`}
-                                    >
-                                        <div className="flex items-center gap-3 min-w-0 pr-2">
-                                            <File01Icon className={`h-4.5 w-4.5 shrink-0 ${session.id === activeSessionId && isOptimizerPath ? 'text-[#111827]' : 'text-[#6b7280]'}`} />
-                                            <span className="truncate">{session.title}</span>
-                                        </div>
-
-                                        <div className="flex items-center gap-2 shrink-0">
-                                            {session.atsScore !== null && (
-                                                <div className="flex items-center justify-center h-5 px-1.5 bg-[#111827] rounded-full text-[10px] font-bold text-white shadow-sm">
-                                                    {session.atsScore}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </Link>
+                                        session={session}
+                                        activeSessionId={activeSessionId}
+                                        isOptimizerPath={isOptimizerPath!}
+                                        onToggle={onToggle}
+                                        onDeleteSession={onDeleteSession}
+                                    />
                                 ))
                             )}
                         </div>
