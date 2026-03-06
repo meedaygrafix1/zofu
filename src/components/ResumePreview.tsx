@@ -471,29 +471,31 @@ export default function ResumePreview({
     return (
         <div className="glass-card h-full flex flex-col">
             {/* Header */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
-                <div className="flex flex-wrap items-center gap-1 rounded-lg bg-surface-sunken p-1 w-full sm:w-auto">
-                    {[
-                        { id: "amplified" as const, label: "Amplified", icon: File01Icon },
-                        { id: "coverLetter" as const, label: "Cover Letter", icon: File02Icon },
-                        { id: "diff" as const, label: "Changes", icon: GitCompareIcon },
-                        { id: "original" as const, label: "Original", icon: EyeIcon },
-                    ].map(({ id, label, icon: Icon }) => (
-                        <button
-                            key={id}
-                            onClick={() => setViewMode(id)}
-                            className={`
-                flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 sm:px-3 text-[11px] sm:text-xs font-medium transition-all
-                ${viewMode === id
-                                    ? "bg-white text-foreground shadow-sm"
-                                    : "text-muted hover:text-foreground"
-                                }
-              `}
-                        >
-                            <Icon className="h-3.5 w-3.5" />
-                            {label}
-                        </button>
-                    ))}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border px-4 py-3">
+                <div className="flex w-full sm:w-auto overflow-x-auto no-scrollbar rounded-lg bg-surface-sunken p-1 snap-x shadow-inner">
+                    <div className="flex min-w-max w-full">
+                        {[
+                            { id: "amplified" as const, label: "Amplified", icon: File01Icon },
+                            { id: "coverLetter" as const, label: "Cover Letter", icon: File02Icon },
+                            { id: "diff" as const, label: "Changes", icon: GitCompareIcon },
+                            { id: "original" as const, label: "Original", icon: EyeIcon },
+                        ].map(({ id, label, icon: Icon }) => (
+                            <button
+                                key={id}
+                                onClick={() => setViewMode(id)}
+                                className={`
+                                    flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all snap-center whitespace-nowrap
+                                    ${viewMode === id
+                                        ? "bg-white text-foreground shadow-sm"
+                                        : "text-muted hover:text-foreground"
+                                    }
+                                `}
+                            >
+                                <Icon className="h-3.5 w-3.5" />
+                                {label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {amplifiedText && (

@@ -98,6 +98,18 @@ h6 {
   background: var(--muted-light);
 }
 
+/* Hide scrollbar utility */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Glass card utility */
 .glass-card {
   background: var(--card-bg);

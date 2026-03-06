@@ -177,6 +177,8 @@ export function useSessionHistory() {
                 ...sessions.filter((s) => s.id !== id),
             ].slice(0, 20);
 
+            console.log("Saving session to DB:", { id: session.id, hasCoverLetter: !!session.coverLetter });
+
             setSessions(updated);
             persistLocal(updated);
             setActiveSessionId(id);
@@ -185,11 +187,15 @@ export function useSessionHistory() {
             if (userId) {
                 try {
                     const supabase = supabaseRef.current;
-                    const { error: upsertError } = await supabase
+                    const { error: upsertError, data } = await supabase
                         .from("sessions")
-                        .upsert(toRow(session, userId), { onConflict: "id" });
+                        .upsert(toRow(session, userId), { onConflict: "id" })
+                        .select();
                     if (upsertError) {
-                        console.error("Failed to save session to Supabase:", upsertError.message);
+                        console.error("Failed to save session to Supabase:", upsertError);
+                        console.error("Payload was:", toRow(session, userId));
+                    } else {
+                        console.log("Supabase save success:", data);
                     }
                 } catch (err) {
                     console.error("Failed to save session to Supabase", err);

@@ -16,7 +16,8 @@ function getClient() {
 }
 
 function getModel() {
-    return process.env.AI_MODEL || "gemini-2.5-flash";
+    const model = process.env.AI_MODEL;
+    return model === "gemini-2.5-flash" ? "gemini-2.5-pro" : (model || "gemini-2.5-pro");
 }
 
 function parseAIResponse<T>(content: string): T {
@@ -34,8 +35,15 @@ function parseAIResponse<T>(content: string): T {
         } catch (e) {
             console.warn("Standard JSON.parse failed. Attempting to repair JSON structure...");
             // Use jsonrepair to fix trailing commas, missing closing brackets, or truncated strings
-            const repaired = jsonrepair(cleaned);
-            return JSON.parse(repaired) as T;
+            try {
+                const repaired = jsonrepair(cleaned);
+                return JSON.parse(repaired) as T;
+            } catch (repairError) {
+                console.error("jsonrepair also failed.");
+                console.error("Length of original content:", content.length);
+                console.error("End of content:", content.slice(-200));
+                throw e; // throw the original error
+            }
         }
     } catch (error) {
         console.error("AI Response Parsing Failed");
@@ -158,8 +166,6 @@ export async function extractTextFromPDF(
         generationConfig: {
             temperature: 0,
             maxOutputTokens: 65536,
-            // @ts-ignore - disable thinking for simple extraction
-            thinkingConfig: { thinkingBudget: 0 },
         },
     });
 
@@ -217,8 +223,6 @@ Keep your responses concise, practical, and actionable. Use bullet points when l
         generationConfig: {
             temperature: 0.7,
             maxOutputTokens: 2048,
-            // @ts-ignore
-            thinkingConfig: { thinkingBudget: 0 },
         },
     });
 
