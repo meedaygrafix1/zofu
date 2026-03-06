@@ -14,7 +14,7 @@ import {
     Delete02Icon,
 } from "hugeicons-react";
 import { SessionData } from "@/hooks/useSessionHistory";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -40,8 +40,11 @@ interface SwipeableSessionItemProps {
 }
 
 function SwipeableSessionItem({ session, activeSessionId, isOptimizerPath, onToggle, onDeleteSession }: SwipeableSessionItemProps) {
-    // Only enable swipe on touch devices (mobile/tablet)
-    const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+    useEffect(() => {
+        setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    }, []);
 
     return (
         <div className="relative group/session overflow-hidden">

@@ -26,7 +26,7 @@ export const AMPLIFY_PROMPT = `Analyze the following resume and job description.
 
 ## Required Output Format (JSON):
 {
-  "amplifiedResume": "The full rewritten resume text with clear sections",
+  "amplifiedResume": "The full rewritten resume text with clear sections, formatted in markdown. MUST BE PLAIN TEXT/MARKDOWN, NOT A NESTED JSON OBJECT.",
   "atsScore": 85,
   "keywords": {
     "found": ["keyword1", "keyword2"],
