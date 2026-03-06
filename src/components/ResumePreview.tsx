@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Copy01Icon, CheckmarkCircle01Icon, EyeIcon, GitCompareIcon, File01Icon, File02Icon } from "hugeicons-react";
+import ReactMarkdown from 'react-markdown';
 
 interface Change {
     section: string;
@@ -600,10 +601,10 @@ export default function ResumePreview({
                             initial={{ opacity: 0, x: 10 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -10 }}
-                            className="prose prose-sm max-w-none"
+                            className="prose prose-sm prose-blue max-w-none text-foreground"
                         >
-                            <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                                {amplifiedText || originalText}
+                            <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                                <ReactMarkdown>{amplifiedText || originalText}</ReactMarkdown>
                             </div>
                         </motion.div>
                     )}
@@ -614,10 +615,10 @@ export default function ResumePreview({
                             initial={{ opacity: 0, x: 10 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -10 }}
-                            className="prose prose-sm max-w-none"
+                            className="prose prose-sm prose-blue max-w-none text-foreground"
                         >
-                            <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                                {coverLetter}
+                            <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                                <ReactMarkdown>{coverLetter}</ReactMarkdown>
                             </div>
                         </motion.div>
                     )}
