@@ -6,7 +6,8 @@ CRITICAL RULES:
 3. Quantify achievements wherever possible (e.g., "increased sales" → "boosted revenue by 20%").
 4. Naturally integrate the top keywords from the JD for ATS compatibility.
 5. Keep the content truthful and professional.
-6. Maintain the candidate's voice while making it more compelling.`;
+6. Maintain the candidate's voice while making it more compelling.
+7. NEVER add conversational filler, editorial notes, or comments about the changes you made (e.g., "Note: I have updated..."). Your output MUST contain ONLY the target content.`;
 
 export const AMPLIFY_PROMPT = `Analyze the following resume and job description. Then produce an amplified version of the resume tailored to this specific role.
 

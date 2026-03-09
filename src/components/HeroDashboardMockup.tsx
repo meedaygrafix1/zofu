@@ -86,7 +86,7 @@ export function HeroDashboardMockup() {
                     ) : (
                         <SparklesIcon className="w-4 h-4" />
                     )}
-                    {isScanning ? "Amplifying..." : "Amplify Resume"}
+                    {isScanning ? "Optimizing..." : "Optimize Resume"}
                 </button>
             </div>
 

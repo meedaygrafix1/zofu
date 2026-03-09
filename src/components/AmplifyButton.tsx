@@ -34,12 +34,12 @@ export default function AmplifyButton({
             {isLoading ? (
                 <>
                     <Loading01Icon className="h-4 w-4 animate-spin" />
-                    Amplifying...
+                    Optimizing...
                 </>
             ) : (
                 <>
                     <FlashIcon className="h-4 w-4" />
-                    Amplify Resume
+                    Optimize Resume
                 </>
             )}
         </motion.button>

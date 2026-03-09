@@ -181,7 +181,7 @@ export default function LandingPage() {
                 {[
                   { step: "01", title: "Upload", desc: "Drop your current PDF or Word resume.", icon: File01Icon },
                   { step: "02", title: "Paste", desc: "Paste the Job Description from LinkedIn or Indeed.", icon: FlashIcon },
-                  { step: "03", title: "Amplify", desc: "Get an ATS-optimized rewrite and prep cheat sheet.", icon: BotIcon }
+                  { step: "03", title: "Optimize", desc: "Get an ATS-optimized rewrite and prep cheat sheet.", icon: BotIcon }
                 ].map((s, i) => (
                   <div key={i} className="relative flex flex-col items-center text-center space-y-4">
                     <div className="w-24 h-24 rounded-full bg-white border border-border shadow-sm flex items-center justify-center z-10 text-foreground">
@@ -246,7 +246,7 @@ export default function LandingPage() {
                   href="/auth"
                   className="inline-flex items-center justify-center h-14 px-8 rounded-full bg-foreground text-white font-semibold text-lg hover:bg-black transition-transform hover:scale-105 shadow-xl shadow-black/10"
                 >
-                  Start Your First Amplification
+                  Start Your First Optimization
                 </Link>
               </div>
             </div>

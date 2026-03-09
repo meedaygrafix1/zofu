@@ -11,6 +11,20 @@ interface Change {
     amplified: string;
     reason: string;
 }
+const cleanMarkdownForExport = (text: string) => {
+    return text.split('\n').map(line => {
+        let clean = line.replace(/^#{1,6}\s*/, '');
+        if (/^\s*\*\s/.test(clean)) {
+            clean = clean.replace(/^\s*\*\s/, '• ');
+        } else if (/^\s*\*(?!\*)/.test(clean)) {
+            clean = clean.replace(/^\s*\*(?!\*)/, '• ');
+        }
+        clean = clean.replace(/\*\*/g, '___BOLD___');
+        clean = clean.replace(/\*/g, '');
+        clean = clean.replace(/___BOLD___/g, '**');
+        return clean;
+    }).join('\n');
+};
 
 interface ResumePreviewProps {
     originalText: string;
@@ -104,7 +118,7 @@ export default function ResumePreview({
             // Strip bold markers for width calculation / wrapping
             const stripBold = (text: string) => text.replace(/\*\*(.+?)\*\*/g, '$1');
 
-            const rawLines = textToDownload.split("\n");
+            const rawLines = cleanMarkdownForExport(textToDownload).split("\n");
 
             // Heuristic detectors
             const isSectionHeader = (line: string) => {
@@ -278,7 +292,7 @@ export default function ResumePreview({
             const { Document, Paragraph, TextRun, Packer, HeadingLevel, AlignmentType, BorderStyle, TabStopPosition, TabStopType } = await import("docx");
             const { saveAs } = await import("file-saver");
 
-            const rawLines = textToDownload.split("\n");
+            const rawLines = cleanMarkdownForExport(textToDownload).split("\n");
 
             const stripBoldDocx = (text: string) => text.replace(/\*\*(.+?)\*\*/g, '$1');
 
