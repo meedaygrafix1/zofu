@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { amplifyResume } from "@/lib/ai";
+import { createClient } from "@/utils/supabase/server";
 
 export async function POST(request: NextRequest) {
     try {
+        const supabase = await createClient();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        if (!user || authError) {
+            return NextResponse.json(
+                { error: "Unauthorized access" },
+                { status: 401 }
+            );
+        }
+
         const { resumeText, jobDescription } = await request.json();
 
         if (!resumeText || !jobDescription) {

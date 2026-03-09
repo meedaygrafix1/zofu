@@ -1,11 +1,22 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { streamText, tool } from "ai";
 import { z } from "zod";
+import { createClient } from "@/utils/supabase/server";
 
 export const maxDuration = 30; // Max execution time for Next.js API routes
 
 export async function POST(req: Request) {
     try {
+        const supabase = await createClient();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        if (!user || authError) {
+            return new Response(JSON.stringify({ error: "Unauthorized access" }), {
+                status: 401,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
         const { messages, resumeContext, jobContext } = await req.json();
 
         console.log("INCOMING MESSAGES:", JSON.stringify(messages, null, 2));
