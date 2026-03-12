@@ -7,11 +7,11 @@ import {
   CheckmarkBadge01Icon,
   Message01Icon,
   FlashIcon,
-  File01Icon,
   BotIcon,
   UserIcon
 } from "hugeicons-react";
 import { HeroDashboardMockup } from "@/components/HeroDashboardMockup";
+import { HowItWorksSection } from "@/components/HowItWorksSection";
 
 export default function LandingPage() {
   return (
@@ -31,7 +31,7 @@ export default function LandingPage() {
               Sign In
             </Link>
             <Link
-              href="/auth"
+              href="/auth?view=signup"
               className="bg-foreground text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-black transition-transform hover:scale-105 inline-flex items-center justify-center h-9"
             >
               Start Free
@@ -82,7 +82,7 @@ export default function LandingPage() {
               className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
             >
               <Link
-                href="/auth"
+                href="/auth?view=signup"
                 className="w-full sm:w-[280px] h-14 px-8 rounded-full bg-foreground text-white font-semibold text-lg hover:bg-black transition-all shadow-lg shadow-black/10 hover:shadow-black/20 hover:-translate-y-0.5 flex items-center justify-center gap-2"
               >
                 Try for Free
@@ -166,36 +166,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* 4. How It Works */}
-        <section id="how-it-works" className="border-b border-border">
-          <div className="max-w-7xl mx-auto py-24 px-6 border-x border-border bg-background/80 backdrop-blur-sm">
-            <div className="max-w-5xl mx-auto">
-              <div className="text-center mb-16">
-                <h2 className="text-3xl font-bold mb-4">How It Works</h2>
-                <p className="text-muted">The lift is incredibly low. Results are instant.</p>
-              </div>
-
-              <div className="grid md:grid-cols-3 gap-12 relative">
-                <div className="hidden md:block absolute top-12 left-[15%] right-[15%] h-[2px] bg-gradient-to-r from-border via-border-strong to-border" />
-
-                {[
-                  { step: "01", title: "Upload", desc: "Drop your current PDF or Word resume.", icon: File01Icon },
-                  { step: "02", title: "Paste", desc: "Paste the Job Description from LinkedIn or Indeed.", icon: FlashIcon },
-                  { step: "03", title: "Optimize", desc: "Get an ATS-optimized rewrite and prep cheat sheet.", icon: BotIcon }
-                ].map((s, i) => (
-                  <div key={i} className="relative flex flex-col items-center text-center space-y-4">
-                    <div className="w-24 h-24 rounded-full bg-white border border-border shadow-sm flex items-center justify-center z-10 text-foreground">
-                      <s.icon className="w-8 h-8 opacity-80" />
-                    </div>
-                    <div className="text-sm font-bold text-primary tracking-widest uppercase">Step {s.step}</div>
-                    <h3 className="text-xl font-bold">{s.title}</h3>
-                    <p className="text-muted px-4">{s.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
+        <HowItWorksSection />
 
         {/* 5. Interview Intelligence */}
         <section className="bg-foreground text-white border-b border-border relative overflow-hidden">
@@ -207,7 +178,7 @@ export default function LandingPage() {
                 Most tools stop at the resume. ZOFU analyzes the exact "gaps" in your profile vs. the JD and acts as your personal AI Coach, providing the precise questions a recruiter will ask to test those gaps.
               </p>
               <Link
-                href="/auth"
+                href="/auth?view=signup"
                 className="inline-flex items-center justify-center gap-2 h-14 px-8 bg-white text-foreground font-semibold text-lg rounded-full hover:bg-white/90 transition-colors"
               >
                 Try the AI Coach <BotIcon className="w-5 h-5" />
@@ -243,7 +214,7 @@ export default function LandingPage() {
               <p className="text-lg text-muted">Join 1,000+ designers and engineers using ZOFU to level up.</p>
               <div className="pt-4">
                 <Link
-                  href="/auth"
+                  href="/auth?view=signup"
                   className="inline-flex items-center justify-center h-14 px-8 rounded-full bg-foreground text-white font-semibold text-lg hover:bg-black transition-transform hover:scale-105 shadow-xl shadow-black/10"
                 >
                   Start Your First Optimization

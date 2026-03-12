@@ -195,7 +195,7 @@ export default function DashboardOverview() {
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                                        {sessions.slice(0, 6).map((session, idx) => (
+                                        {sessions.slice(0, 3).map((session, idx) => (
                                             <motion.div
                                                 key={session.id}
                                                 initial={{ opacity: 0, y: 10 }}

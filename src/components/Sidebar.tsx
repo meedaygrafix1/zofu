@@ -12,6 +12,8 @@ import {
     CheckmarkBadge01Icon,
     Logout01Icon,
     Delete02Icon,
+    UserIcon,
+    CreditCardIcon,
 } from "hugeicons-react";
 import { SessionData } from "@/hooks/useSessionHistory";
 import { useState, useEffect } from "react";
@@ -119,6 +121,8 @@ export default function Sidebar({
     const isOverviewPath = pathname === "/app";
     const isOptimizerPath = pathname?.startsWith("/app/amplify");
     const isCoachPath = pathname?.startsWith("/app/coach");
+    const isProfilePath = pathname?.startsWith("/app/profile");
+    const isBillingPath = pathname?.startsWith("/app/billing");
 
     const handleNewSessionClick = () => {
         onNewSession();
@@ -228,7 +232,7 @@ export default function Sidebar({
                                     {searchQuery ? "No sessions match your search." : "No saved sessions."}
                                 </p>
                             ) : (
-                                filteredSessions.map((session) => (
+                                (searchQuery ? filteredSessions : filteredSessions.slice(0, 3)).map((session) => (
                                     <SwipeableSessionItem
                                         key={session.id}
                                         session={session}
@@ -240,6 +244,35 @@ export default function Sidebar({
                                 ))
                             )}
                         </div>
+                    </div>
+                </div>
+
+                {/* Settings Category */}
+                <div className="px-4 pb-4">
+                    <div className="px-3 mb-2 text-[11px] font-bold text-[#9ca3af]">Settings</div>
+                    <div className="space-y-1">
+                        <Link
+                            href="/app/profile"
+                            onClick={() => { if (window.innerWidth < 1024) onToggle(); }}
+                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${isProfilePath ? 'bg-[#e5e7eb] text-[#111827] font-semibold' : 'text-[#4b5563] hover:bg-[#f3f4f6] hover:text-[#111827] font-medium'}`}
+                        >
+                            <UserIcon className={`h-4.5 w-4.5 ${isProfilePath ? 'text-[#111827]' : 'text-[#6b7280]'}`} />
+                            Profile
+                        </Link>
+
+                        <Link
+                            href="/app/billing"
+                            onClick={() => { if (window.innerWidth < 1024) onToggle(); }}
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isBillingPath ? 'bg-[#e5e7eb] text-[#111827] font-semibold' : 'text-[#4b5563] hover:bg-[#f3f4f6] hover:text-[#111827] font-medium'}`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <CreditCardIcon className={`h-4.5 w-4.5 ${isBillingPath ? 'text-[#111827]' : 'text-[#6b7280]'}`} />
+                                Billing
+                            </div>
+                            <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-warning-light text-warning border border-warning/20">
+                                Soon
+                            </span>
+                        </Link>
                     </div>
                 </div>
 
