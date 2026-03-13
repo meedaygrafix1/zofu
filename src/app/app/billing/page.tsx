@@ -18,7 +18,7 @@ import Link from "next/link";
 const PLANS = [
     {
         name: "Free",
-        price: "$0",
+        price: "₦0",
         period: "forever",
         description: "Great for trying out Zofu.",
         features: ["5 resume optimizations/month", "ATS score checker", "Basic keyword matching"],
@@ -30,7 +30,7 @@ const PLANS = [
     },
     {
         name: "Pro",
-        price: "$12",
+        price: "₦2,000",
         period: "/ month",
         description: "For active job seekers.",
         features: ["Unlimited optimizations", "AI Cover Letter generation", "Priority AI processing", "Session history (unlimited)", "AI Interview Coach"],
@@ -42,7 +42,7 @@ const PLANS = [
     },
     {
         name: "Team",
-        price: "$39",
+        price: "₦5,000",
         period: "/ month",
         description: "For career coaches & teams.",
         features: ["Everything in Pro", "Up to 5 team members", "Shared session library", "Priority support"],

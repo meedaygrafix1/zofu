@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Logout01Icon, Rocket02Icon, SparklesIcon, File01Icon, Time01Icon } from "hugeicons-react";
+import { Logout01Icon, Rocket02Icon, SparklesIcon, File01Icon, Time01Icon, Delete02Icon } from "hugeicons-react";
 import Sidebar from "@/components/Sidebar";
 import { useOptimizer } from "@/context/OptimizerContext";
 import Link from "next/link";
@@ -195,18 +195,31 @@ export default function DashboardOverview() {
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                                        {sessions.slice(0, 3).map((session, idx) => (
+                                        {sessions.slice(0, 9).map((session, idx) => (
                                             <motion.div
                                                 key={session.id}
                                                 initial={{ opacity: 0, y: 10 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: 0.1 * idx }}
                                                 onClick={() => handleLoadSession(session.id)}
-                                                className="glass-card p-5 hover:-translate-y-1 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between min-h-[140px]"
+                                                className="glass-card p-5 hover:-translate-y-1 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between min-h-[140px] relative"
                                             >
+                                                {/* Delete Button */}
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        deleteSession(session.id);
+                                                    }}
+                                                    className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 flex items-center justify-center rounded-md hover:bg-danger/10 text-[#9ca3af] hover:text-danger z-10"
+                                                    title="Delete session"
+                                                    aria-label="Delete session"
+                                                >
+                                                    <Delete02Icon className="h-4 w-4" strokeWidth={2} />
+                                                </button>
+
                                                 <div className="mb-4">
                                                     <div className="flex items-start justify-between gap-3 mb-2">
-                                                        <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors" title={session.title}>
+                                                        <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors pr-6" title={session.title}>
                                                             {session.title}
                                                         </h3>
                                                     </div>
