@@ -15,6 +15,7 @@ import ATSScoreCard from "@/components/ATSScoreCard";
 import KeywordChecklist from "@/components/KeywordChecklist";
 import InterviewPrep from "@/components/InterviewPrep";
 import { useOptimizer } from "@/context/OptimizerContext";
+import { useProStatus } from "@/hooks/useProStatus";
 
 // Keyword interfaces moved to context and API types
 
@@ -53,6 +54,7 @@ export default function Home() {
   // Layout state
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const { isPro } = useProStatus();
 
   const handleSignOut = async () => {
     const { createClient } = await import('@/utils/supabase/client');
@@ -225,6 +227,7 @@ export default function Home() {
                     coverLetter={coverLetter}
                     changes={changes}
                     isLoading={isAmplifying}
+                    isPro={isPro}
                   />
                 </motion.div>
 

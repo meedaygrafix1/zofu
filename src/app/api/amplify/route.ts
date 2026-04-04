@@ -14,6 +14,10 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Determine Pro status from user metadata.
+        // Set user_metadata.is_pro = true in Supabase when billing goes live.
+        const isPro = user.user_metadata?.is_pro === true;
+
         const { resumeText, jobDescription } = await request.json();
 
         if (!resumeText || !jobDescription) {
@@ -35,6 +39,14 @@ export async function POST(request: NextRequest) {
         }
 
         const result = await amplifyResume(resumeText, jobDescription);
+
+        // Gate: cover letter is a Pro-only feature.
+        // Strip it from the response for free-tier users so the client
+        // can show the upsell overlay instead.
+        if (!isPro) {
+            result.coverLetter = "";
+        }
+
         return NextResponse.json(result);
     } catch (error) {
         console.error("Amplification error:", error);
