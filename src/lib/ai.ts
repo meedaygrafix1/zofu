@@ -17,7 +17,8 @@ function getClient() {
 
 function getModel() {
     const model = process.env.AI_MODEL;
-    return model === "gemini-2.5-flash" ? "gemini-2.5-pro" : (model || "gemini-2.5-pro");
+    // Fallback to gemini-1.5-pro due to 503 Service Unavailable errors on gemini-2.5-pro
+    return model === "gemini-2.5-flash" ? "gemini-1.5-pro" : (model || "gemini-1.5-pro");
 }
 
 function parseAIResponse<T>(content: string): T {
