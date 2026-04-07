@@ -20,7 +20,8 @@ const cleanMarkdownForExport = (text: string) => {
             clean = clean.replace(/^\s*\*(?!\*)/, '• ');
         }
         clean = clean.replace(/\*\*/g, '___BOLD___');
-        clean = clean.replace(/\*/g, '');
+        // Remove italic asterisks but preserve literal ones like C++*
+        clean = clean.replace(/(^|\s)\*([a-zA-Z0-9.,]+)\*(\s|$)/g, '$1$2$3');
         clean = clean.replace(/___BOLD___/g, '**');
         return clean;
     }).join('\n');
@@ -104,20 +105,44 @@ export default function ResumePreview({
                 return segments.length > 0 ? segments : [{ text, bold: false }];
             };
 
-            // Render a line with inline bold segments in jsPDF
-            const renderRichLine = (text: string, x: number, y: number, fontSize: number, baseFontStyle: string = "normal") => {
-                const segments = parseBoldSegments(text);
-                let cursorX = x;
+            // Render text that wraps naturally and respects bold markers
+            const printRichText = (text: string, startX: number, maxWidth: number, fontSize: number, baseLineHeight = 4.5, alignRight: boolean = false) => {
                 doc.setFontSize(fontSize);
-                for (const seg of segments) {
-                    doc.setFont("helvetica", seg.bold ? "bold" : baseFontStyle);
-                    doc.text(seg.text, cursorX, y);
-                    cursorX += doc.getTextWidth(seg.text);
+                let currentX = startX;
+
+                if (alignRight) {
+                    doc.setFont("helvetica", "normal");
+                    doc.text(stripBold(text), startX, cursorY, { align: "right" });
+                    return;
                 }
-                doc.setFont("helvetica", baseFontStyle);
+                
+                const segments = parseBoldSegments(text);
+                for (let i = 0; i < segments.length; i++) {
+                    const seg = segments[i];
+                    doc.setFont("helvetica", seg.bold ? "bold" : "normal");
+                    
+                    const tokens = seg.text.split(/(\s+)/);
+                    for (const token of tokens) {
+                        if (!token) continue;
+                        const tokenWidth = doc.getTextWidth(token);
+                        
+                        if (currentX + tokenWidth > startX + maxWidth && currentX > startX && !token.match(/^\s+$/)) {
+                            cursorY += baseLineHeight;
+                            addPageIfNeeded(baseLineHeight);
+                            currentX = startX;
+                        }
+                        
+                        if (currentX === startX && token.match(/^\s+$/)) {
+                            continue; // omit leading spaces wrapped to a new line
+                        }
+                        
+                        doc.text(token, currentX, cursorY);
+                        currentX += tokenWidth;
+                    }
+                }
             };
 
-            // Strip bold markers for width calculation / wrapping
+            // Strip bold markers for width calculation / heuristic matching
             const stripBold = (text: string) => text.replace(/\*\*(.+?)\*\*/g, '$1');
 
             const rawLines = cleanMarkdownForExport(textToDownload).split("\n");
@@ -234,12 +259,12 @@ export default function ResumePreview({
                     const { title, date } = extractDate(stripBold(trimmed));
                     if (date) {
                         // Title left, date right
-                        renderRichLine(title, margin, cursorY, 10, "bold");
+                        printRichText(`**${title}**`, margin, usableWidth, 10);
                         doc.setFont("helvetica", "normal");
                         doc.setFontSize(9.5);
                         doc.text(date, pageWidth - margin, cursorY, { align: "right" });
                     } else {
-                        renderRichLine(stripBold(trimmed), margin, cursorY, 10, "bold");
+                        printRichText(`**${stripBold(trimmed)}**`, margin, usableWidth, 10);
                     }
                     cursorY += 5;
                     return;
@@ -258,25 +283,16 @@ export default function ResumePreview({
                     // Draw bullet
                     doc.text("•", margin + bulletIndent, cursorY);
 
-                    // Wrap the bullet text
-                    const wrappedLines = doc.splitTextToSize(stripBold(bulletText), usableWidth - textIndent) as string[];
-                    for (const wl of wrappedLines) {
-                        addPageIfNeeded(4.5);
-                        renderRichLine(wl, margin + textIndent, cursorY, 9.5);
-                        cursorY += 4.5;
-                    }
+                    // Render bullet text with bold support + wrapping
+                    printRichText(bulletText, margin + textIndent, usableWidth - textIndent, 9.5);
+                    cursorY += 4.5;
                     return;
                 }
 
                 // Regular body text
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(9.5);
-                const wrappedLines = doc.splitTextToSize(stripBold(trimmed), usableWidth) as string[];
-                for (const wl of wrappedLines) {
-                    addPageIfNeeded(4.5);
-                    renderRichLine(wl, margin, cursorY, 9.5);
-                    cursorY += 4.5;
-                }
+                addPageIfNeeded(4.5);
+                printRichText(trimmed, margin, usableWidth, 9.5);
+                cursorY += 4.5;
             });
 
             doc.save("amplified-resume.pdf");
