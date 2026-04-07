@@ -17,8 +17,8 @@ function getClient() {
 
 function getModel() {
     const model = process.env.AI_MODEL;
-    // Fallback to gemini-1.5-pro due to 503 Service Unavailable errors on gemini-2.5-pro
-    return model === "gemini-2.5-flash" ? "gemini-1.5-pro" : (model || "gemini-1.5-pro");
+    // Use gemini-2.5-flash as the stable fallback since gemini-2.5-pro has 503 errors and 1.5 doesn't exist
+    return "gemini-2.5-flash";
 }
 
 function parseAIResponse<T>(content: string): T {
@@ -166,7 +166,7 @@ export async function extractTextFromPDF(
 ): Promise<{ text: string; pages: number }> {
     const client = getClient();
     const model = client.getGenerativeModel({
-        model: "gemini-1.5-flash", // Use flash model for text extraction to avoid high demand 503s on pro
+        model: "gemini-2.5-flash", // Use flash model for text extraction to avoid high demand 503s on pro
         generationConfig: {
             temperature: 0,
             maxOutputTokens: 65536,
