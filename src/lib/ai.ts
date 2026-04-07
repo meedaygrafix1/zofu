@@ -68,7 +68,10 @@ async function withRetry<T>(
                 error?.cause?.code === 'UND_ERR_CONNECT_TIMEOUT' ||
                 errorMessage.includes('network') ||
                 errorMessage.includes('Timeout') ||
-                errorMessage.includes('ECONNRESET');
+                errorMessage.includes('ECONNRESET') ||
+                errorMessage.includes('503') ||
+                errorMessage.includes('500') ||
+                errorMessage.includes('429');
 
             if (!isFetchError || attempt >= maxRetries) {
                 throw error;
@@ -162,7 +165,7 @@ export async function extractTextFromPDF(
 ): Promise<{ text: string; pages: number }> {
     const client = getClient();
     const model = client.getGenerativeModel({
-        model: getModel(),
+        model: "gemini-1.5-flash", // Use flash model for text extraction to avoid high demand 503s on pro
         generationConfig: {
             temperature: 0,
             maxOutputTokens: 65536,
