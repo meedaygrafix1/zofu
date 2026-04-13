@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft01Icon, Mail01Icon, LockKeyIcon, SentIcon } from "hugeicons-react";
+import { ArrowLeft01Icon, Mail01Icon, LockKeyIcon, SentIcon, ViewIcon, ViewOffSlashIcon } from "hugeicons-react";
 import { createClient } from "@/utils/supabase/client";
 
 type AuthView = "signIn" | "signUp" | "forgotPassword" | "resetSent";
@@ -17,6 +17,9 @@ function AuthPageContent() {
     const [view, setView] = useState<AuthView>(initialView);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [name, setName] = useState("");
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -25,6 +28,9 @@ function AuthPageContent() {
         setView(newView);
         setError("");
         setPassword("");
+        setConfirmPassword("");
+        setShowPassword(false);
+        setShowConfirmPassword(false);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -56,6 +62,16 @@ function AuthPageContent() {
 
         if (!email || !password || (view === "signUp" && !name)) {
             setError("Please fill in all fields.");
+            return;
+        }
+
+        if (view === "signUp" && password !== confirmPassword) {
+            setError("Passwords do not match.");
+            return;
+        }
+
+        if (view === "signUp" && password.length < 6) {
+            setError("Password must be at least 6 characters.");
             return;
         }
 
@@ -366,15 +382,63 @@ function AuthPageContent() {
                                         <div className="relative">
                                             <LockKeyIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted pointer-events-none" />
                                             <input
-                                                type="password"
+                                                type={showPassword ? "text" : "password"}
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
                                                 placeholder="••••••••"
                                                 disabled={isLoading}
-                                                className="w-full pl-12 pr-4 py-4 rounded-xl bg-surface-sunken border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                                                className="w-full pl-12 pr-12 py-4 rounded-xl bg-surface-sunken border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                                             />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors"
+                                                tabIndex={-1}
+                                            >
+                                                {showPassword ? (
+                                                    <ViewOffSlashIcon className="w-5 h-5" />
+                                                ) : (
+                                                    <ViewIcon className="w-5 h-5" />
+                                                )}
+                                            </button>
                                         </div>
                                     </div>
+
+                                    <AnimatePresence mode="wait">
+                                        {isSignUp && (
+                                            <motion.div
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: "auto" }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                className="space-y-2 overflow-hidden"
+                                            >
+                                                <label className="text-sm font-semibold text-foreground/80 pl-1">Confirm Password</label>
+                                                <div className="relative">
+                                                    <LockKeyIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted pointer-events-none" />
+                                                    <input
+                                                        type={showConfirmPassword ? "text" : "password"}
+                                                        value={confirmPassword}
+                                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                                        placeholder="••••••••"
+                                                        disabled={isLoading}
+                                                        className="w-full pl-12 pr-12 py-4 rounded-xl bg-surface-sunken border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors"
+                                                        tabIndex={-1}
+                                                    >
+                                                        {showConfirmPassword ? (
+                                                            <ViewOffSlashIcon className="w-5 h-5" />
+                                                        ) : (
+                                                            <ViewIcon className="w-5 h-5" />
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
 
                                     <AnimatePresence mode="wait">
                                         {error && (
