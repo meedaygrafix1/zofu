@@ -14,12 +14,14 @@ import {
     Delete02Icon,
     UserIcon,
     CreditCardIcon,
+    Gif01Icon,
 } from "hugeicons-react";
 import { SessionData } from "@/hooks/useSessionHistory";
 import { useProStatus } from "@/hooks/useProStatus";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import WhatsNewModal, { useWhatsNew } from "@/components/WhatsNewModal";
 
 interface SidebarProps {
     sessions: SessionData[];
@@ -119,6 +121,7 @@ export default function Sidebar({
     const pathname = usePathname();
     const [searchQuery, setSearchQuery] = useState("");
     const { isPro } = useProStatus();
+    const { isOpen: isWhatsNewOpen, open: openWhatsNew, close: closeWhatsNew } = useWhatsNew();
 
     const isOverviewPath = pathname === "/app";
     const isOptimizerPath = pathname?.startsWith("/app/amplify");
@@ -275,6 +278,21 @@ export default function Sidebar({
                                 Soon
                             </span>
                         </Link>
+
+                        {/* What's New */}
+                        <button
+                            id="whats-new-sidebar-btn"
+                            onClick={openWhatsNew}
+                            className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-[#4b5563] hover:bg-[#f3f4f6] hover:text-[#111827] font-medium transition-colors group"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Gif01Icon className="h-4.5 w-4.5 text-[#6b7280] group-hover:text-[#111827] transition-colors" />
+                                What&apos;s New
+                            </div>
+                            <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 animate-pulse">
+                                New
+                            </span>
+                        </button>
                     </div>
                 </div>
 
@@ -309,6 +327,9 @@ export default function Sidebar({
                     </button>
                 </div>
             </aside>
+
+            {/* What's New Modal */}
+            <WhatsNewModal isOpen={isWhatsNewOpen} onClose={closeWhatsNew} />
         </>
     );
 }

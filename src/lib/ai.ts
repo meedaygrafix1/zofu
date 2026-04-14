@@ -17,8 +17,9 @@ function getClient() {
 
 function getModel() {
     const model = process.env.AI_MODEL;
-    // Use gemini-2.5-flash as the stable fallback since gemini-2.5-pro has 503 errors and 1.5 doesn't exist
-    return "gemini-2.5-flash";
+    // Temporarily using gemini-2.0-flash for stability — 2.5 models are experiencing high-demand 503s
+    // Switch back to "gemini-2.5-flash" once Google stabilizes
+    return model || "gemini-2.0-flash";
 }
 
 function parseAIResponse<T>(content: string): T {
@@ -164,32 +165,45 @@ export async function generateInterviewQuestions(
 export async function extractTextFromPDF(
     pdfBuffer: Buffer
 ): Promise<{ text: string; pages: number }> {
-    const client = getClient();
-    const model = client.getGenerativeModel({
-        model: "gemini-2.5-flash", // Use flash model for text extraction to avoid high demand 503s on pro
-        generationConfig: {
-            temperature: 0,
-            maxOutputTokens: 65536,
-        },
-    });
+    // With pdfjs-dist externalized via serverExternalPackages, we can resolve
+    // the real worker file path from disk and avoid all Turbopack bundling issues.
+    const { createRequire } = await import("module");
+    const require = createRequire(import.meta.url);
 
-    const base64Data = pdfBuffer.toString("base64");
+    const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+    const workerPath = require.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = workerPath;
 
-    const result = await withRetry(() => model.generateContent([
-        {
-            inlineData: {
-                mimeType: "application/pdf",
-                data: base64Data,
-            },
-        },
-        "Extract ALL the text content from this PDF resume. Return ONLY the raw text content exactly as it appears in the document, preserving the structure (sections, bullet points, etc). Do not add any commentary, analysis, or formatting instructions.",
-    ]));
+    const data = new Uint8Array(pdfBuffer);
+    const doc = await pdfjsLib.getDocument({
+        data,
+        useWorkerFetch: false,
+        disableRange: true,
+        disableStream: true,
+        isEvalSupported: false,
+    }).promise;
 
-    const text = result.response.text();
-    if (!text) throw new Error("Failed to extract text from PDF");
+    const numPages = doc.numPages;
+    const textParts: string[] = [];
 
-    return { text, pages: 1 };
+    for (let i = 1; i <= numPages; i++) {
+        const page = await doc.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items
+            .map((item: any) => ("str" in item ? item.str : ""))
+            .join(" ");
+        textParts.push(pageText);
+        page.cleanup();
+    }
+
+    await doc.destroy();
+
+    const text = textParts.join("\n").trim();
+    if (!text) throw new Error("No text content found in PDF");
+
+    return { text, pages: numPages };
 }
+
 
 export interface ChatMessage {
     role: "user" | "model";

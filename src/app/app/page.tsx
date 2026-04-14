@@ -194,57 +194,77 @@ export default function DashboardOverview() {
                                         </button>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                                        {sessions.slice(0, 9).map((session, idx) => (
-                                            <motion.div
-                                                key={session.id}
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: 0.1 * idx }}
-                                                onClick={() => handleLoadSession(session.id)}
-                                                className="glass-card p-5 hover:-translate-y-1 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between min-h-[140px] relative"
-                                            >
-                                                {/* Delete Button */}
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        deleteSession(session.id);
-                                                    }}
-                                                    className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 flex items-center justify-center rounded-md hover:bg-danger/10 text-[#9ca3af] hover:text-danger z-10"
-                                                    title="Delete session"
-                                                    aria-label="Delete session"
-                                                >
-                                                    <Delete02Icon className="h-4 w-4" strokeWidth={2} />
-                                                </button>
-
-                                                <div className="mb-4">
-                                                    <div className="flex items-start justify-between gap-3 mb-2">
-                                                        <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors pr-6" title={session.title}>
-                                                            {session.title}
-                                                        </h3>
-                                                    </div>
-                                                    <p className="text-xs text-muted-light flex items-center gap-1.5">
-                                                        <Time01Icon className="w-3.5 h-3.5" />
-                                                        {new Date(parseInt(session.id.split('_')[1])).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                                                    </p>
-                                                </div>
-
-                                                <div className="flex items-center justify-between mt-auto">
-                                                    <span className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-md">
-                                                        Resume & JD
-                                                    </span>
-
-                                                    {session.atsScore !== null && (
-                                                        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${session.atsScore >= 80 ? "bg-success/10 text-success border-success/20" :
-                                                            session.atsScore >= 60 ? "bg-warning/10 text-warning border-warning/20" :
-                                                                "bg-danger/10 text-danger border-danger/20"
-                                                            }`}>
-                                                            {session.atsScore}% Score
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </motion.div>
-                                        ))}
+                                    <div className="glass-card overflow-hidden">
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-sm">
+                                                <thead>
+                                                    <tr className="border-b border-border bg-surface-sunken/50">
+                                                        <th className="text-left font-semibold text-muted-light px-5 py-3.5 text-xs uppercase tracking-wider">Session</th>
+                                                        <th className="text-left font-semibold text-muted-light px-5 py-3.5 text-xs uppercase tracking-wider hidden sm:table-cell">Date</th>
+                                                        <th className="text-left font-semibold text-muted-light px-5 py-3.5 text-xs uppercase tracking-wider">ATS Score</th>
+                                                        <th className="text-right font-semibold text-muted-light px-5 py-3.5 text-xs uppercase tracking-wider w-[60px]"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {sessions.slice(0, 10).map((session, idx) => (
+                                                        <motion.tr
+                                                            key={session.id}
+                                                            initial={{ opacity: 0 }}
+                                                            animate={{ opacity: 1 }}
+                                                            transition={{ delay: 0.04 * idx }}
+                                                            onClick={() => handleLoadSession(session.id)}
+                                                            className="border-b border-border/60 last:border-b-0 hover:bg-primary/[0.03] cursor-pointer transition-colors group"
+                                                        >
+                                                            <td className="px-5 py-4">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                                                                        <File01Icon className="w-4 h-4 text-primary" />
+                                                                    </div>
+                                                                    <div className="min-w-0">
+                                                                        <p className="font-semibold text-foreground truncate group-hover:text-primary transition-colors" title={session.title}>
+                                                                            {session.title}
+                                                                        </p>
+                                                                        <p className="text-xs text-muted-light sm:hidden mt-0.5">
+                                                                            {new Date(parseInt(session.id.split('_')[1])).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-5 py-4 hidden sm:table-cell">
+                                                                <span className="text-muted text-[13px]">
+                                                                    {new Date(parseInt(session.id.split('_')[1])).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-5 py-4">
+                                                                {session.atsScore !== null ? (
+                                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${session.atsScore >= 80 ? "bg-success/10 text-success border-success/20" :
+                                                                        session.atsScore >= 60 ? "bg-warning/10 text-warning border-warning/20" :
+                                                                            "bg-danger/10 text-danger border-danger/20"
+                                                                        }`}>
+                                                                        {session.atsScore}%
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-xs text-muted-light">--</span>
+                                                                )}
+                                                            </td>
+                                                            <td className="px-5 py-4 text-right">
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        deleteSession(session.id);
+                                                                    }}
+                                                                    className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 flex items-center justify-center rounded-lg hover:bg-danger/10 text-muted-light hover:text-danger ml-auto"
+                                                                    title="Delete session"
+                                                                    aria-label="Delete session"
+                                                                >
+                                                                    <Delete02Icon className="h-4 w-4" strokeWidth={2} />
+                                                                </button>
+                                                            </td>
+                                                        </motion.tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 )}
                             </motion.div>

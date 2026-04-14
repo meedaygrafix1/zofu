@@ -10,6 +10,10 @@ import {
     UserIcon,
     Message01Icon,
     Settings02Icon,
+    Attachment01Icon,
+    Cancel01Icon,
+    FileAttachmentIcon,
+    Loading03Icon,
 } from "hugeicons-react";
 import ReactMarkdown from "react-markdown";
 
@@ -29,7 +33,15 @@ export default function ChatPanel({ resumeContext, jobContext }: ChatPanelProps)
     const { messages, status, sendMessage } = useChat();
 
     const [input, setInput] = useState("");
+    const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+    const [uploadedResumeText, setUploadedResumeText] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadError, setUploadError] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const isLoading = status === "submitted" || status === "streaming";
+
+    // Merge: prefer uploaded resume, fall back to context from optimizer
+    const effectiveResumeContext = uploadedResumeText || resumeContext;
 
     const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setInput(e.target.value);
@@ -42,13 +54,69 @@ export default function ChatPanel({ resumeContext, jobContext }: ChatPanelProps)
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.type !== "application/pdf") {
+            setUploadError("Please upload a PDF file.");
+            return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+            setUploadError("File size must be under 10MB.");
+            return;
+        }
+
+        setUploadError(null);
+        setIsUploading(true);
+        setUploadedFileName(file.name);
+
+        try {
+            const formData = new FormData();
+            formData.append("resume", file);
+
+            const res = await fetch("/api/amplify/parse", {
+                method: "POST",
+                body: formData,
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data?.error || data?.message || "Failed to parse PDF");
+            }
+
+            if (!data.text) {
+                throw new Error("No text content found in the PDF");
+            }
+
+            setUploadedResumeText(data.text);
+        } catch (err: any) {
+            const message = err?.message || "Failed to read the PDF";
+            setUploadError(`${message}. Please try again.`);
+            setUploadedFileName(null);
+            setUploadedResumeText(null);
+        } finally {
+            setIsUploading(false);
+            // Reset file input so the same file can be re-selected
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    };
+
+    const handleRemoveFile = () => {
+        setUploadedFileName(null);
+        setUploadedResumeText(null);
+        setUploadError(null);
+    };
+
     const handleFormSubmit = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         if (!input.trim() || isLoading) return;
 
         sendMessage(
             { role: 'user', parts: [{ type: 'text', text: input.trim() }] },
-            { body: { resumeContext, jobContext } }
+            { body: { resumeContext: effectiveResumeContext, jobContext } }
         );
         setInput("");
 
@@ -219,17 +287,79 @@ export default function ChatPanel({ resumeContext, jobContext }: ChatPanelProps)
 
                 {/* Input area */}
                 <div className="pt-2 shrink-0 w-full">
+                    {/* Attached file banner */}
+                    <AnimatePresence>
+                        {uploadedFileName && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 8 }}
+                                className="flex items-center gap-2 px-3 py-2 mb-2 bg-primary/5 border border-primary/20 rounded-xl text-sm"
+                            >
+                                <FileAttachmentIcon className="w-4 h-4 text-primary shrink-0" />
+                                <span className="truncate text-foreground font-medium text-[13px] flex-1">
+                                    {uploadedFileName}
+                                </span>
+                                {isUploading ? (
+                                    <Loading03Icon className="w-4 h-4 text-primary animate-spin shrink-0" />
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={handleRemoveFile}
+                                        className="text-muted hover:text-danger transition-colors shrink-0"
+                                    >
+                                        <Cancel01Icon className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Upload error */}
+                    <AnimatePresence>
+                        {uploadError && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -4 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0 }}
+                                className="text-[12px] text-danger font-medium px-3 py-1.5 mb-2"
+                            >
+                                {uploadError}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Hidden file input */}
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".pdf,application/pdf"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                    />
+
                     <form
                         onSubmit={handleFormSubmit}
                         className="relative flex items-end gap-2 p-2 bg-white/60 backdrop-blur-md border border-border/80 rounded-2xl focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 transition-all duration-200 w-full"
                     >
+                        {/* Attach file button */}
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploading || isLoading}
+                            className="flex shrink-0 items-center justify-center p-2 mb-0.5 rounded-xl text-muted hover:text-foreground hover:bg-black/5 disabled:opacity-40 disabled:cursor-not-allowed transition-all h-[36px] w-[36px]"
+                            title="Attach resume (PDF)"
+                        >
+                            <Attachment01Icon className="h-4 w-4" strokeWidth={2} />
+                        </button>
+
                         <textarea
                             ref={textareaRef}
                             value={input}
                             onChange={handleInputChange}
                             onInput={handleTextareaInput}
                             onKeyDown={handleKeyDown}
-                            placeholder="Ask the AI engineer..."
+                            placeholder={uploadedResumeText ? "Ask about your resume..." : "Ask the AI coach..."}
                             disabled={isLoading}
                             rows={1}
                             className="flex-1 max-h-[120px] min-h-[24px] bg-transparent border-none resize-none outline-none py-1.5 px-2 text-[14px] text-foreground placeholder:text-muted-light scrollbar-thin overflow-y-auto leading-relaxed"
