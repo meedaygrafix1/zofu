@@ -1,21 +1,82 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import {
   SparklesIcon,
   CheckmarkBadge01Icon,
   Message01Icon,
   FlashIcon,
   BotIcon,
-  UserIcon
+  UserIcon,
+  Cancel01Icon,
 } from "hugeicons-react";
 import { HeroDashboardMockup } from "@/components/HeroDashboardMockup";
 import { HowItWorksSection } from "@/components/HowItWorksSection";
 
+const BANNER_ID = "announcement_banner_v1_3_0";
+
 export default function LandingPage() {
+  const [bannerVisible, setBannerVisible] = useState(false);
+
+  useEffect(() => {
+    const dismissed = localStorage.getItem(BANNER_ID);
+    if (!dismissed) setBannerVisible(true);
+  }, []);
+
+  const dismissBanner = () => {
+    localStorage.setItem(BANNER_ID, "dismissed");
+    setBannerVisible(false);
+  };
   return (
     <div className="min-h-screen bg-background bg-grid-pattern text-foreground flex flex-col font-sans selection:bg-primary/20 selection:text-primary relative">
+
+      {/* Announcement Banner */}
+      <AnimatePresence>
+        {bannerVisible && (
+          <motion.div
+            key="announcement-banner"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="relative z-[60] overflow-hidden"
+          >
+            <div className="bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a] text-white px-4 py-2.5 flex items-center justify-center gap-3 text-sm">
+              {/* Glow blobs */}
+              <div className="absolute left-1/4 top-0 h-full w-32 bg-primary/20 blur-2xl pointer-events-none" />
+              <div className="absolute right-1/4 top-0 h-full w-32 bg-accent/20 blur-2xl pointer-events-none" />
+
+              <div className="relative flex items-center gap-2 flex-wrap justify-center">
+                <span className="inline-flex items-center gap-1 bg-primary/20 border border-primary/30 text-primary text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
+                  <SparklesIcon className="h-3 w-3" />
+                  New
+                </span>
+                <span className="text-white/90 font-medium">
+                  Upload your resume PDF in AI Coach for instant personalized feedback
+                </span>
+                <span className="hidden sm:inline text-white/40">·</span>
+                <Link
+                  href="/auth?view=signup"
+                  className="hidden sm:inline-flex items-center gap-1 text-primary font-semibold hover:text-primary-hover transition-colors whitespace-nowrap"
+                >
+                  Try it now →
+                </Link>
+              </div>
+
+              <button
+                id="announcement-banner-close"
+                onClick={dismissBanner}
+                aria-label="Dismiss announcement"
+                className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center h-6 w-6 rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-colors"
+              >
+                <Cancel01Icon className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Navbar */}
       <nav className="fixed top-0 inset-x-0 z-50 bg-white/80 backdrop-blur-md border-b border-border">
