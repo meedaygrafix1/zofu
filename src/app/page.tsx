@@ -14,7 +14,7 @@ import {
 } from "hugeicons-react";
 import { HeroDashboardMockup } from "@/components/HeroDashboardMockup";
 import { HowItWorksSection } from "@/components/HowItWorksSection";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import Logo from "@/components/Logo";
 
 const BANNER_ID = "announcement_banner_v1_3_0";
 
@@ -106,7 +106,7 @@ export default function LandingPage() {
       >
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/zofu-logo.png" alt="Zofu" className="h-6 w-auto" />
+            <Logo className="h-6 w-auto" alt="Zofu" />
           </div>
           <div className="flex items-center gap-4">
             <Link
@@ -121,7 +121,6 @@ export default function LandingPage() {
             >
               Start Free
             </Link>
-            <ThemeToggle />
           </div>
         </div>
       </nav>
@@ -314,7 +313,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-border bg-surface-elevated py-12 text-center text-sm text-muted">
         <div className="flex items-center justify-center gap-2 mb-4">
-          <img src="/zofu-logo.png" alt="Zofu" className="h-4 w-auto grayscale opacity-50 dark:invert" />
+          <Logo className="h-4 w-auto grayscale opacity-50" alt="Zofu" />
         </div>
         <p>&copy; {new Date().getFullYear()} ZOFU. All rights reserved.</p>
       </footer>

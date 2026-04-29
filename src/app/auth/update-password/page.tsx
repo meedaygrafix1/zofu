@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft01Icon, LockKeyIcon, CheckmarkCircle02Icon } from "hugeicons-react";
 import { createClient } from "@/utils/supabase/client";
+import Logo from "@/components/Logo";
 
 export default function UpdatePasswordPage() {
     const router = useRouter();
@@ -76,7 +77,7 @@ export default function UpdatePasswordPage() {
                 <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-accent/10 blur-[100px] rounded-full" />
 
                 <div className="relative z-10 flex flex-col gap-6 max-w-lg mt-12">
-                    <img src="/zofu-logo.png" alt="Zofu" className="w-24 h-auto mb-8" />
+                    <Logo className="w-24 h-auto" alt="Zofu" />
                     <h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight text-balance">
                         Set a strong new password.
                     </h1>
@@ -96,7 +97,7 @@ export default function UpdatePasswordPage() {
 
                     {/* Mobile Logo */}
                     <div className="lg:hidden flex justify-center mb-8">
-                        <img src="/zofu-logo.png" alt="Zofu" className="h-8 w-auto" />
+                        <Logo className="h-8 w-auto" alt="Zofu" />
                     </div>
 
                     <AnimatePresence mode="wait">

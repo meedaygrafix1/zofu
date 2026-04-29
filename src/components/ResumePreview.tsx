@@ -519,7 +519,7 @@ export default function ResumePreview({
                                 className={`
                                     flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all snap-center whitespace-nowrap
                                     ${viewMode === id
-                                        ? "bg-white text-foreground shadow-sm"
+                                        ? "bg-surface-elevated text-foreground shadow-sm"
                                         : "text-muted hover:text-foreground"
                                     }
                                 `}
@@ -537,7 +537,7 @@ export default function ResumePreview({
                         <motion.button
                             whileTap={{ scale: 0.95 }}
                             onClick={copyToClipboard}
-                            className="flex flex-1 sm:flex-none items-center justify-center gap-1.5 rounded-lg px-3 py-2 sm:py-1.5 text-sm sm:text-xs font-medium bg-white border border-border text-foreground shadow-sm hover:bg-surface-sunken sm:bg-transparent sm:border-transparent sm:shadow-none sm:text-muted sm:hover:bg-surface-sunken sm:hover:text-foreground transition-all"
+                            className="flex flex-1 sm:flex-none items-center justify-center gap-1.5 rounded-lg px-3 py-2 sm:py-1.5 text-sm sm:text-xs font-medium bg-surface-elevated border border-border text-foreground shadow-sm hover:bg-surface-sunken sm:bg-transparent sm:border-transparent sm:shadow-none sm:text-muted sm:hover:bg-surface-sunken sm:hover:text-foreground transition-all"
                         >
                             {copied ? (
                                 <CheckmarkCircle01Icon className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-success" />
@@ -573,7 +573,7 @@ export default function ResumePreview({
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                         exit={{ opacity: 0, y: -4, scale: 0.95 }}
                                         transition={{ duration: 0.15 }}
-                                        className="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl border border-border shadow-lg z-50 overflow-hidden"
+                                        className="absolute right-0 top-full mt-2 w-52 bg-surface-elevated rounded-xl border border-border shadow-lg z-50 overflow-hidden"
                                     >
                                         <button
                                             onClick={downloadAsPDF}
@@ -697,8 +697,8 @@ export default function ResumePreview({
                             </div>
 
                             {/* Lock overlay */}
-                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/70 backdrop-blur-[2px]">
-                                <div className="bg-white rounded-2xl shadow-xl border border-border px-8 py-7 flex flex-col items-center text-center max-w-xs mx-4">
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/70 backdrop-blur-[2px]">
+                                <div className="bg-surface-elevated rounded-2xl shadow-xl border border-border px-8 py-7 flex flex-col items-center text-center max-w-xs mx-4">
                                     <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 mb-4">
                                         <svg className="h-7 w-7 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />

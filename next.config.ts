@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["pdfjs-dist", "pdf-parse"],
+  // Tells Next.js to skip bundling this package and run it natively in Node.js
+  serverExternalPackages: ["pdf-parse"],
 };
 
 export default nextConfig;

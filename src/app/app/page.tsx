@@ -7,6 +7,7 @@ import Sidebar from "@/components/Sidebar";
 import { useOptimizer } from "@/context/OptimizerContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Logo from "@/components/Logo";
 
 export default function DashboardOverview() {
     const router = useRouter();
@@ -53,7 +54,7 @@ export default function DashboardOverview() {
             <div className="flex-1 lg:ml-[280px] flex flex-col min-w-0">
 
                 {/* Mobile Header Navigation */}
-                <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-white/80 backdrop-blur-md border-b border-border shadow-sm">
+                <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-md border-b border-border">
                     {/* Left: Mobile Hamburger */}
                     <button
                         onClick={() => setSidebarOpen(true)}
@@ -68,7 +69,7 @@ export default function DashboardOverview() {
 
                     {/* Center: Logo */}
                     <Link href="/app" className="flex items-center">
-                        <img src="/zofu-logo.png" alt="Zofu Logo" className="h-6 w-auto object-contain" />
+                        <Logo className="h-6 w-auto" alt="Zofu Logo" />
                     </Link>
 
                     {/* Right: Logout */}
@@ -104,13 +105,13 @@ export default function DashboardOverview() {
                                 transition={{ delay: 0.1 }}
                                 className="md:col-span-12 lg:col-span-7"
                             >
-                                <div className="glass-card p-6 h-full bg-gradient-to-br from-white to-primary-ultra-light border-primary/20 relative overflow-hidden group">
+                                <div className="glass-card p-6 h-full bg-gradient-to-br from-surface-elevated to-primary-ultra-light border-primary/20 relative overflow-hidden group">
                                     {/* Background Decor */}
                                     <div className="absolute -right-20 -top-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors duration-500"></div>
 
                                     <div className="relative z-10 flex flex-col h-full justify-between gap-3">
                                         <div>
-                                            <div className="h-10 w-10 rounded-xl bg-black text-white flex items-center justify-center mb-4 shadow-md shadow-black/10">
+                                            <div className="h-10 w-10 rounded-xl bg-foreground text-background flex items-center justify-center mb-4 shadow-md shadow-black/10">
                                                 <SparklesIcon className="w-5 h-5" />
                                             </div>
                                             <h2 className="text-xl font-bold mb-1 text-foreground">Optimize a New Resume</h2>
@@ -121,7 +122,7 @@ export default function DashboardOverview() {
 
                                         <button
                                             onClick={handleStartOptimization}
-                                            className="flex items-center justify-center gap-2 bg-black hover:bg-gray-900 text-white px-6 py-3 rounded-xl font-semibold shadow-md transition-all active:scale-[0.98] w-full sm:w-auto self-start text-sm"
+                                            className="flex items-center justify-center gap-2 bg-foreground hover:bg-foreground/90 text-background px-6 py-3 rounded-xl font-semibold shadow-md transition-all active:scale-[0.98] w-full sm:w-auto self-start text-sm"
                                         >
                                             <Rocket02Icon className="w-4 h-4" />
                                             Optimize Resume Now
@@ -288,7 +289,7 @@ export default function DashboardOverview() {
                             initial={{ opacity: 0, scale: 0.95, y: 10 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                            className="relative w-full max-w-sm bg-white rounded-2xl shadow-xl border border-border overflow-hidden"
+                            className="relative w-full max-w-sm bg-surface-elevated rounded-2xl shadow-xl border border-border overflow-hidden"
                         >
                             <div className="p-6">
                                 <h3 className="text-xl font-bold text-foreground mb-2">Sign Out</h3>
@@ -299,7 +300,7 @@ export default function DashboardOverview() {
                             <div className="p-4 bg-surface-sunken border-t border-border flex gap-3 justify-end">
                                 <button
                                     onClick={() => setShowLogoutModal(false)}
-                                    className="px-4 py-2 text-sm font-semibold rounded-lg hover:bg-black/5 transition-colors"
+                                    className="px-4 py-2 text-sm font-semibold rounded-lg hover:bg-surface-sunken transition-colors"
                                 >
                                     Cancel
                                 </button>

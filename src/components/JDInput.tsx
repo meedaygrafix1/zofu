@@ -30,7 +30,7 @@ export default function JDInput({ value, onChange, disabled }: JDInputProps) {
 
             <div
                 className={`
-          relative rounded-xl border bg-white transition-all duration-200
+          relative rounded-xl border bg-surface-elevated transition-all duration-200
           ${isFocused
                         ? "border-primary shadow-[0_0_0_3px_rgba(59,130,246,0.1)]"
                         : "border-border hover:border-border-strong"

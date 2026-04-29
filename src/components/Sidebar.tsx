@@ -22,6 +22,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import WhatsNewModal, { useWhatsNew } from "@/components/WhatsNewModal";
+import Logo from "@/components/Logo";
 
 interface SidebarProps {
     sessions: SessionData[];
@@ -69,7 +70,7 @@ function SwipeableSessionItem({ session, activeSessionId, isOptimizerPath, onTog
                         onDeleteSession(session.id);
                     }
                 }}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors relative z-10 bg-[#f9fafb] ${session.id === activeSessionId && isOptimizerPath ? 'bg-[#e5e7eb] text-[#111827] font-semibold' : 'text-[#4b5563] hover:bg-[#f3f4f6] hover:text-[#111827] font-medium'} pr-8 md:pr-3 md:group-hover/session:pr-8`}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors relative z-10 bg-surface-sunken ${session.id === activeSessionId && isOptimizerPath ? 'bg-border text-foreground font-semibold' : 'text-muted hover:bg-border/60 hover:text-foreground font-medium'} pr-8 md:pr-3 md:group-hover/session:pr-8`}
             >
                 <Link
                     href={`/app/amplify?session=${session.id}`}
@@ -78,13 +79,13 @@ function SwipeableSessionItem({ session, activeSessionId, isOptimizerPath, onTog
                     }}
                     className="flex-1 flex items-center gap-3 min-w-0 pr-2"
                 >
-                    <File01Icon className={`h-4.5 w-4.5 shrink-0 ${session.id === activeSessionId && isOptimizerPath ? 'text-[#111827]' : 'text-[#6b7280]'}`} />
+                    <File01Icon className={`h-4.5 w-4.5 shrink-0 ${session.id === activeSessionId && isOptimizerPath ? 'text-foreground' : 'text-muted'}`} />
                     <span className="truncate">{session.title}</span>
                 </Link>
 
                 <div className={`flex items-center gap-2 shrink-0 md:group-hover/session:hidden ${session.atsScore !== null ? '' : ''}`}>
                     {session.atsScore !== null && (
-                        <div className="flex items-center justify-center h-5 px-1.5 bg-[#111827] rounded-full text-[10px] font-bold text-white shadow-sm">
+                        <div className="flex items-center justify-center h-5 px-1.5 bg-foreground rounded-full text-[10px] font-bold text-background shadow-sm">
                             {session.atsScore}
                         </div>
                     )}
@@ -98,7 +99,7 @@ function SwipeableSessionItem({ session, activeSessionId, isOptimizerPath, onTog
                     e.stopPropagation();
                     onDeleteSession(session.id);
                 }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 hidden md:group-hover/session:flex items-center justify-center h-6 w-6 rounded hover:bg-danger/10 text-[#9ca3af] hover:text-danger z-20 transition-colors cursor-pointer"
+                className="absolute right-2 top-1/2 -translate-y-1/2 hidden md:group-hover/session:flex items-center justify-center h-6 w-6 rounded hover:bg-danger/10 text-muted-light hover:text-danger z-20 transition-colors cursor-pointer"
                 title="Delete session"
                 aria-label="Delete session"
             >
@@ -162,13 +163,13 @@ export default function Sidebar({
 
             {/* Sidebar */}
             {/* The sidebar is now fixed to the left permanently on large screens. */}
-            <aside className={`fixed inset-y-0 left-0 z-40 w-[280px] bg-[#f9fafb] border-r border-[#e5e7eb] flex flex-col transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
+            <aside className={`fixed inset-y-0 left-0 z-40 w-[280px] bg-surface-sunken border-r border-border flex flex-col transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
 
                 {/* Workspace Switcher */}
                 <div className="p-4 pt-6 lg:pt-4">
                     <div className="flex items-center p-2 pl-3 bg-transparent rounded-xl">
                         <Link href="/app" className="flex items-center block">
-                            <img src="/zofu-logo.png" alt="Zofu Logo" className="h-7 w-auto object-contain" />
+                            <Logo className="h-7 w-auto" alt="Zofu Logo" />
                         </Link>
                     </div>
                 </div>
@@ -176,15 +177,15 @@ export default function Sidebar({
                 {/* Search */}
                 <div className="px-4 pb-5">
                     <div className="relative flex items-center">
-                        <Search01Icon className="absolute left-3 h-4 w-4 text-[#9ca3af]" />
+                        <Search01Icon className="absolute left-3 h-4 w-4 text-muted-light" />
                         <input
                             type="text"
                             placeholder="Search"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-[#f3f4f6] text-sm text-[#111827] font-medium rounded-xl pl-9 pr-8 py-2.5 outline-none focus:ring-2 focus:ring-[#e5e7eb] transition-all placeholder:text-[#9ca3af] placeholder:font-normal"
+                            className="w-full bg-surface-elevated/60 dark:bg-border/40 text-sm text-foreground font-medium rounded-xl pl-9 pr-8 py-2.5 outline-none focus:ring-2 focus:ring-border transition-all placeholder:text-muted-light placeholder:font-normal border border-border/60"
                         />
-                        <kbd className="absolute right-3 text-[10px] font-bold text-[#6b7280] bg-white border border-[#e5e7eb] px-1.5 py-0.5 rounded shadow-sm">⌘K</kbd>
+                        <kbd className="absolute right-3 text-[10px] font-bold text-muted bg-surface-elevated border border-border px-1.5 py-0.5 rounded shadow-sm">⌘K</kbd>
                     </div>
                 </div>
 
@@ -193,12 +194,12 @@ export default function Sidebar({
 
                     {/* Workspace Category */}
                     <div className="mb-6">
-                        <div className="px-3 mb-2 text-[11px] font-bold text-[#9ca3af]">Workspace</div>
+                        <div className="px-3 mb-2 text-[11px] font-bold text-muted-light tracking-wider uppercase">Workspace</div>
                         <div className="space-y-1">
                             <Link href="/app"
-                                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${isOverviewPath ? 'bg-[#e5e7eb] text-[#111827] font-semibold' : 'text-[#4b5563] hover:bg-[#f3f4f6] hover:text-[#111827] font-medium'}`}
+                                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 ${isOverviewPath ? 'bg-foreground/10 dark:bg-foreground/15 text-foreground font-semibold' : 'text-muted hover:bg-foreground/5 hover:text-foreground font-medium'}`}
                             >
-                                <Home01Icon className={`h-4.5 w-4.5 ${isOverviewPath ? 'text-[#111827]' : 'text-[#6b7280]'}`} />
+                                <Home01Icon className={`h-4.5 w-4.5 ${isOverviewPath ? 'text-foreground' : 'text-muted-light'}`} />
                                 Overview
                             </Link>
 
@@ -207,9 +208,9 @@ export default function Sidebar({
                                 onClick={() => {
                                     if (window.innerWidth < 1024) onToggle();
                                 }}
-                                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${isOptimizerPath ? 'bg-[#e5e7eb] text-[#111827] font-semibold' : 'text-[#4b5563] hover:bg-[#f3f4f6] hover:text-[#111827] font-medium'}`}
+                                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 ${isOptimizerPath ? 'bg-foreground/10 dark:bg-foreground/15 text-foreground font-semibold' : 'text-muted hover:bg-foreground/5 hover:text-foreground font-medium'}`}
                             >
-                                <SparklesIcon className={`h-4.5 w-4.5 ${isOptimizerPath ? 'text-[#111827]' : 'text-[#6b7280]'}`} />
+                                <SparklesIcon className={`h-4.5 w-4.5 ${isOptimizerPath ? 'text-foreground' : 'text-muted-light'}`} />
                                 Optimizer
                             </Link>
 
@@ -218,10 +219,10 @@ export default function Sidebar({
                                 onClick={() => {
                                     if (window.innerWidth < 1024) onToggle();
                                 }}
-                                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isCoachPath ? 'bg-[#e5e7eb] text-[#111827] font-semibold' : 'text-[#4b5563] hover:bg-[#f3f4f6] hover:text-[#111827] font-medium'}`}
+                                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-150 ${isCoachPath ? 'bg-foreground/10 dark:bg-foreground/15 text-foreground font-semibold' : 'text-muted hover:bg-foreground/5 hover:text-foreground font-medium'}`}
                             >
                                 <div className="flex items-center gap-3">
-                                    <FlashIcon className={`h-4.5 w-4.5 ${isCoachPath ? 'text-[#111827]' : 'text-[#6b7280]'}`} />
+                                    <FlashIcon className={`h-4.5 w-4.5 ${isCoachPath ? 'text-foreground' : 'text-muted-light'}`} />
                                     AI Coach
                                 </div>
                             </Link>
@@ -230,10 +231,10 @@ export default function Sidebar({
 
                     {/* History Category */}
                     <div>
-                        <div className="px-3 mb-2 text-[11px] font-bold text-[#9ca3af]">Sessions</div>
+                        <div className="px-3 mb-2 text-[11px] font-bold text-muted-light tracking-wider uppercase">Sessions</div>
                         <div className="space-y-1">
                             {filteredSessions.length === 0 ? (
-                                <p className="text-[12px] text-[#9ca3af] px-3 py-2">
+                                <p className="text-[12px] text-muted-light px-3 py-2">
                                     {searchQuery ? "No sessions match your search." : "No saved sessions."}
                                 </p>
                             ) : (
@@ -254,24 +255,24 @@ export default function Sidebar({
 
                 {/* Settings Category */}
                 <div className="px-4 pb-4">
-                    <div className="px-3 mb-2 text-[11px] font-bold text-[#9ca3af]">Settings</div>
+                    <div className="px-3 mb-2 text-[11px] font-bold text-muted-light tracking-wider uppercase">Settings</div>
                     <div className="space-y-1">
                         <Link
                             href="/app/profile"
                             onClick={() => { if (window.innerWidth < 1024) onToggle(); }}
-                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${isProfilePath ? 'bg-[#e5e7eb] text-[#111827] font-semibold' : 'text-[#4b5563] hover:bg-[#f3f4f6] hover:text-[#111827] font-medium'}`}
+                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 ${isProfilePath ? 'bg-foreground/10 dark:bg-foreground/15 text-foreground font-semibold' : 'text-muted hover:bg-foreground/5 hover:text-foreground font-medium'}`}
                         >
-                            <UserIcon className={`h-4.5 w-4.5 ${isProfilePath ? 'text-[#111827]' : 'text-[#6b7280]'}`} />
+                            <UserIcon className={`h-4.5 w-4.5 ${isProfilePath ? 'text-foreground' : 'text-muted-light'}`} />
                             Profile
                         </Link>
 
                         <Link
                             href="/app/billing"
                             onClick={() => { if (window.innerWidth < 1024) onToggle(); }}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isBillingPath ? 'bg-[#e5e7eb] text-[#111827] font-semibold' : 'text-[#4b5563] hover:bg-[#f3f4f6] hover:text-[#111827] font-medium'}`}
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-150 ${isBillingPath ? 'bg-foreground/10 dark:bg-foreground/15 text-foreground font-semibold' : 'text-muted hover:bg-foreground/5 hover:text-foreground font-medium'}`}
                         >
                             <div className="flex items-center gap-3">
-                                <CreditCardIcon className={`h-4.5 w-4.5 ${isBillingPath ? 'text-[#111827]' : 'text-[#6b7280]'}`} />
+                                <CreditCardIcon className={`h-4.5 w-4.5 ${isBillingPath ? 'text-foreground' : 'text-muted-light'}`} />
                                 Billing
                             </div>
                             <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-warning-light text-warning border border-warning/20">
@@ -283,13 +284,13 @@ export default function Sidebar({
                         <button
                             id="whats-new-sidebar-btn"
                             onClick={openWhatsNew}
-                            className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-[#4b5563] hover:bg-[#f3f4f6] hover:text-[#111827] font-medium transition-colors group"
+                            className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-muted hover:bg-foreground/5 hover:text-foreground font-medium transition-all duration-150 group"
                         >
                             <div className="flex items-center gap-3">
-                                <Gif01Icon className="h-4.5 w-4.5 text-[#6b7280] group-hover:text-[#111827] transition-colors" />
+                                <Gif01Icon className="h-4.5 w-4.5 text-muted-light group-hover:text-foreground transition-colors" />
                                 What&apos;s New
                             </div>
-                            <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 animate-pulse">
+                            <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 animate-pulse">
                                 New
                             </span>
                         </button>
@@ -317,7 +318,7 @@ export default function Sidebar({
                 )}
 
                 {/* Footer - Sign Out */}
-                <div className="p-4 border-t border-[#e5e7eb]">
+                <div className="p-4 border-t border-[#e5e7eb] dark:border-white/10">
                     <button
                         onClick={onLogoutClick}
                         className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold text-danger bg-danger/10 hover:bg-danger/20 transition-colors"

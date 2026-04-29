@@ -340,7 +340,7 @@ export default function ChatPanel({ resumeContext, jobContext }: ChatPanelProps)
 
                     <form
                         onSubmit={handleFormSubmit}
-                        className="relative flex items-end gap-2 p-2 bg-white/60 backdrop-blur-md border border-border/80 rounded-2xl focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 transition-all duration-200 w-full"
+                        className="relative flex items-end gap-2 p-2 bg-surface-elevated/80 backdrop-blur-md border border-border/80 rounded-2xl focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 transition-all duration-200 w-full"
                     >
                         {/* Attach file button */}
                         <button

@@ -16,6 +16,7 @@ import Sidebar from "@/components/Sidebar";
 import { useOptimizer } from "@/context/OptimizerContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 
 type Toast = { type: "success" | "error"; message: string } | null;
 
@@ -157,7 +158,7 @@ export default function ProfilePage() {
 
             <div className="flex-1 lg:ml-[280px] flex flex-col min-w-0">
                 {/* Mobile header */}
-                <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-white/80 backdrop-blur-md border-b border-border shadow-sm">
+                <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-md border-b border-border">
                     <button onClick={() => setSidebarOpen(true)} className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-black/5 text-foreground transition-colors">
                         <div className="flex flex-col gap-1.5 items-center justify-center w-5">
                             <span className="h-0.5 w-full bg-foreground rounded-full" />
@@ -165,7 +166,7 @@ export default function ProfilePage() {
                             <span className="h-0.5 w-3/4 self-start bg-foreground rounded-full" />
                         </div>
                     </button>
-                    <Link href="/app"><img src="/zofu-logo.png" alt="Zofu" className="h-6 w-auto object-contain" /></Link>
+                    <Link href="/app"><Logo className="h-6 w-auto" alt="Zofu" /></Link>
                     <div className="w-10" />
                 </header>
 
@@ -203,7 +204,7 @@ export default function ProfilePage() {
                                     value={fullName}
                                     onChange={e => setFullName(e.target.value)}
                                     placeholder="Your full name"
-                                    className="w-full border border-border rounded-xl px-4 py-2.5 text-sm text-foreground bg-white outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                    className="w-full border border-border rounded-xl px-4 py-2.5 text-sm text-foreground bg-surface-elevated outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                                 />
                             </div>
                             <div>
@@ -242,7 +243,7 @@ export default function ProfilePage() {
                                     value={newPassword}
                                     onChange={e => setNewPassword(e.target.value)}
                                     placeholder="Min. 8 characters"
-                                    className="w-full border border-border rounded-xl px-4 py-2.5 text-sm text-foreground bg-white outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                    className="w-full border border-border rounded-xl px-4 py-2.5 text-sm text-foreground bg-surface-elevated outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                                 />
                             </div>
                             <div>
@@ -252,7 +253,7 @@ export default function ProfilePage() {
                                     value={confirmPassword}
                                     onChange={e => setConfirmPassword(e.target.value)}
                                     placeholder="Repeat new password"
-                                    className="w-full border border-border rounded-xl px-4 py-2.5 text-sm text-foreground bg-white outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                    className="w-full border border-border rounded-xl px-4 py-2.5 text-sm text-foreground bg-surface-elevated outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                                 />
                             </div>
                             <button
@@ -310,7 +311,7 @@ export default function ProfilePage() {
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        className="relative w-full max-w-sm bg-white rounded-2xl shadow-xl border border-border overflow-hidden"
+                        className="relative w-full max-w-sm bg-surface-elevated rounded-2xl shadow-xl border border-border overflow-hidden"
                     >
                         <div className="p-6">
                             <h3 className="text-xl font-bold text-foreground mb-2">Sign Out</h3>

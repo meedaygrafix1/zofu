@@ -16,6 +16,7 @@ import KeywordChecklist from "@/components/KeywordChecklist";
 import InterviewPrep from "@/components/InterviewPrep";
 import { useOptimizer } from "@/context/OptimizerContext";
 import { useProStatus } from "@/hooks/useProStatus";
+import Logo from "@/components/Logo";
 
 // Keyword interfaces moved to context and API types
 
@@ -88,7 +89,7 @@ export default function Home() {
       <div className="flex-1 lg:ml-[280px] flex flex-col min-w-0">
 
         {/* Mobile Header Navigation */}
-        <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-white/80 backdrop-blur-md border-b border-border shadow-sm">
+        <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-md border-b border-border">
           {/* Left: Mobile Hamburger */}
           <button
             onClick={() => setSidebarOpen(true)}
@@ -104,7 +105,7 @@ export default function Home() {
 
           {/* Center: Logo */}
           <Link href="/app" className="flex items-center">
-            <img src="/zofu-logo.png" alt="Zofu Logo" className="h-6 w-auto object-contain" />
+            <Logo className="h-6 w-auto" alt="Zofu Logo" />
           </Link>
 
           {/* Right: Logout */}
@@ -129,7 +130,7 @@ export default function Home() {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-center bg-white/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4 shadow-sm"
+                className="flex items-center justify-center bg-surface-elevated/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4 shadow-sm"
               >
                 <StepIndicator currentStep={currentStep} />
               </motion.div>
@@ -192,7 +193,7 @@ export default function Home() {
                       <button
                         onClick={handleNewSession}
                         disabled={isAmplifying}
-                        className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-border bg-white text-sm font-semibold text-foreground hover:bg-surface-sunken hover:border-border/80 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed group"
+                        className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-border bg-surface-elevated text-sm font-semibold text-foreground hover:bg-surface-sunken hover:border-border/80 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed group"
                       >
                         <svg className="w-4 h-4 text-muted group-hover:text-foreground transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M12 5v14M5 12h14" />
@@ -301,7 +302,7 @@ export default function Home() {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative w-full max-w-sm bg-white rounded-2xl shadow-xl border border-border overflow-hidden"
+              className="relative w-full max-w-sm bg-surface-elevated rounded-2xl shadow-xl border border-border overflow-hidden"
             >
               <div className="p-6">
                 <h3 className="text-xl font-bold text-foreground mb-2">Sign Out</h3>

@@ -72,7 +72,7 @@ export default function WhatsNewModal({ isOpen, onClose }: WhatsNewModalProps) {
                         className="fixed inset-0 z-[61] flex items-center justify-center p-4 pointer-events-none"
                     >
                         <div
-                            className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden pointer-events-auto"
+                            className="relative w-full max-w-lg bg-surface-elevated rounded-2xl shadow-2xl overflow-hidden pointer-events-auto"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Header gradient banner */}

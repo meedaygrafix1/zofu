@@ -8,6 +8,7 @@ import ChatPanel from "@/components/ChatPanel";
 import { useOptimizer } from "@/context/OptimizerContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 
 export default function CoachPage() {
     const router = useRouter();
@@ -59,7 +60,7 @@ export default function CoachPage() {
             {/* Main workspace */}
             <div className="flex-1 lg:ml-[280px] flex flex-col min-w-0 h-screen overflow-hidden">
                 {/* Mobile Header Navigation */}
-                <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-white/80 backdrop-blur-md border-b border-border shadow-sm">
+                <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-md border-b border-border">
                     {/* Left: Mobile Hamburger */}
                     <button
                         onClick={() => setSidebarOpen(true)}
@@ -74,7 +75,7 @@ export default function CoachPage() {
 
                     {/* Center: Logo */}
                     <Link href="/app" className="flex items-center">
-                        <img src="/zofu-logo.png" alt="Zofu Logo" className="h-6 w-auto object-contain" />
+                        <Logo className="h-6 w-auto" alt="Zofu Logo" />
                     </Link>
 
                     {/* Right: Logout */}
@@ -114,7 +115,7 @@ export default function CoachPage() {
                             initial={{ opacity: 0, scale: 0.95, y: 10 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                            className="relative w-full max-w-sm bg-white rounded-2xl shadow-xl border border-border overflow-hidden"
+                            className="relative w-full max-w-sm bg-surface-elevated rounded-2xl shadow-xl border border-border overflow-hidden"
                         >
                             <div className="p-6">
                                 <h3 className="text-xl font-bold text-foreground mb-2">Sign Out</h3>
