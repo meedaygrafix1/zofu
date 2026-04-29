@@ -165,55 +165,41 @@ export async function generateInterviewQuestions(
 export async function extractTextFromPDF(
     pdfBuffer: Buffer
 ): Promise<{ text: string; pages: number }> {
-    try {
-        // Polyfill DOMMatrix — pdf-parse's internal pdf.js references it on load
-        if (typeof globalThis.DOMMatrix === "undefined") {
-            // @ts-ignore
-            globalThis.DOMMatrix = class DOMMatrix {};
-        }
+    // Use Gemini's native PDF understanding via inline data.
+    // This approach requires zero native Node.js modules — no pdf-parse,
+    // no pdfjs-dist, no DOMMatrix polyfills, no bundler workarounds.
+    // It also handles scanned/image-based PDFs that text extractors miss.
+    const client = getClient();
+    const model = client.getGenerativeModel({ model: getModel() });
 
-        // eval('require') is the only reliable way to bypass Next.js/Turbopack
-        // static bundler analysis. import() and createRequire() both get
-        // rewritten at compile time, causing ".default is not a function" or
-        // "o is not a function" after minification. eval() is opaque to the
-        // bundler so pdf-parse is resolved natively by Node.js at runtime.
-        // eslint-disable-next-line no-eval
-        const pdfParseModule = eval("require")("pdf-parse");
+    const base64 = pdfBuffer.toString("base64");
 
-        // Handle pdf-parse v1 (exports a function directly) and
-        // v2 (exports an object with a PDFParse class)
-        let pdfParse: (buf: Buffer) => Promise<{ text: string; numpages: number }>;
+    const result = await withRetry(() =>
+        model.generateContent([
+            {
+                inlineData: {
+                    mimeType: "application/pdf",
+                    data: base64,
+                },
+            },
+            "Extract all text content from this PDF document. Return ONLY the raw text content, preserving paragraphs and structure. Do not add any commentary, headings, or formatting of your own.",
+        ])
+    );
 
-        if (typeof pdfParseModule === "function") {
-            // v1 API
-            pdfParse = pdfParseModule;
-        } else if (typeof pdfParseModule?.default === "function") {
-            pdfParse = pdfParseModule.default;
-        } else if (pdfParseModule?.PDFParse) {
-            // v2 API — PDFParse is a class with a .pdf() method
-            pdfParse = (buf: Buffer) => {
-                const parser = new pdfParseModule.PDFParse();
-                return parser.pdf(buf);
-            };
-        } else {
-            throw new Error(`pdf-parse module has unexpected structure: ${Object.keys(pdfParseModule || {}).join(", ")}`);
-        }
+    const text = result.response.text()?.trim();
 
-        const data = await pdfParse(pdfBuffer);
-
-        if (!data?.text?.trim()) {
-            throw new Error("No readable text found in PDF. The file may be scanned or image-based.");
-        }
-
-        return {
-            text: data.text.trim(),
-            pages: data.numpages || 1,
-        };
-    } catch (error: any) {
-        console.error("PDF extraction error:", error);
-        throw new Error(error.message || "Failed to extract text from PDF");
+    if (!text) {
+        throw new Error(
+            "No readable text found in PDF. The file may be empty or corrupted."
+        );
     }
+
+    return {
+        text,
+        pages: 1, // Page count not required downstream; Gemini reads the full doc
+    };
 }
+
 
 
 export interface ChatMessage {
