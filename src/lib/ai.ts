@@ -17,9 +17,7 @@ function getClient() {
 
 function getModel() {
     const model = process.env.AI_MODEL;
-    // Temporarily using gemini-2.0-flash for stability — 2.5 models are experiencing high-demand 503s
-    // Switch back to "gemini-2.5-flash" once Google stabilizes
-    return model || "gemini-2.0-flash";
+    return model || "gemini-3.0-flash";
 }
 
 function parseAIResponse<T>(content: string): T {
