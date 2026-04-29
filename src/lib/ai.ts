@@ -168,10 +168,12 @@ export async function extractTextFromPDF(
     try {
         // Use pdf-parse which is designed specifically for Node.js environments
         // and doesn't rely on browser APIs like DOMMatrix or Canvas.
-        const pdfParse = (await import("pdf-parse")).default || (await import("pdf-parse"));
+        const pdfModule = await import("pdf-parse");
+        // @ts-ignore - TS doesn't know about default export for this CJS module
+        const pdfParse = pdfModule.default || pdfModule;
         
         // pdf-parse can take a Buffer directly
-        const data = await typeof pdfParse === 'function' ? pdfParse(pdfBuffer) : (pdfParse as any).default(pdfBuffer);
+        const data = await typeof pdfParse === 'function' ? pdfParse(pdfBuffer) : pdfParse.default(pdfBuffer);
         
         if (!data || !data.text || data.text.trim() === "") {
             throw new Error("No readable text found in PDF. The file may be scanned/image-based.");
