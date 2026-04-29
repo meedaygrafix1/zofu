@@ -165,51 +165,26 @@ export async function generateInterviewQuestions(
 export async function extractTextFromPDF(
     pdfBuffer: Buffer
 ): Promise<{ text: string; pages: number }> {
-    // pdfjs-dist v5 requires a non-empty workerSrc (rejects "" and bare paths).
-    // process.cwd() is always the project root in Next.js, so we build the
-    // absolute worker path from there and convert it via pathToFileURL — which
-    // correctly handles Windows drive letters and backslashes on all platforms.
-    const { resolve: pathResolve } = await import("path");
-    const { pathToFileURL } = await import("url");
+    try {
+        // Use pdf-parse which is designed specifically for Node.js environments
+        // and doesn't rely on browser APIs like DOMMatrix or Canvas.
+        const pdfParse = (await import("pdf-parse")).default || (await import("pdf-parse"));
+        
+        // pdf-parse can take a Buffer directly
+        const data = await typeof pdfParse === 'function' ? pdfParse(pdfBuffer) : (pdfParse as any).default(pdfBuffer);
+        
+        if (!data || !data.text || data.text.trim() === "") {
+            throw new Error("No readable text found in PDF. The file may be scanned/image-based.");
+        }
 
-    const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
-
-    const workerAbsPath = pathResolve(
-        process.cwd(),
-        "node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs"
-    );
-    pdfjsLib.GlobalWorkerOptions.workerSrc = pathToFileURL(workerAbsPath).href;
-
-    const data = new Uint8Array(pdfBuffer);
-    const doc = await pdfjsLib.getDocument({
-        data,
-        useWorkerFetch: false,
-        disableRange: true,
-        disableStream: true,
-        isEvalSupported: false,
-        disableFontFace: true,
-    }).promise;
-
-    const numPages = doc.numPages;
-    const textParts: string[] = [];
-
-    for (let i = 1; i <= numPages; i++) {
-        const page = await doc.getPage(i);
-        const content = await page.getTextContent();
-        const pageText = content.items
-            .map((item: any) => ("str" in item ? item.str : ""))
-            .filter(Boolean)
-            .join(" ");
-        textParts.push(pageText);
-        page.cleanup();
+        return { 
+            text: data.text.trim(), 
+            pages: data.numpages || 1 
+        };
+    } catch (error: any) {
+        console.error("PDF extraction error:", error);
+        throw new Error(error.message || "Failed to extract text from PDF");
     }
-
-    await doc.destroy();
-
-    const text = textParts.join("\n").trim();
-    if (!text) throw new Error("No readable text found in PDF. The file may be scanned/image-based.");
-
-    return { text, pages: numPages };
 }
 
 
