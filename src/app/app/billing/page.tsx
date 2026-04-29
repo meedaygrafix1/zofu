@@ -13,8 +13,6 @@ import {
 import Sidebar from "@/components/Sidebar";
 import { useOptimizer } from "@/context/OptimizerContext";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import Logo from "@/components/Logo";
 
 const PLANS = [
     {
@@ -57,7 +55,6 @@ const PLANS = [
 
 export default function BillingPage() {
     const router = useRouter();
-    const [sidebarOpen, setSidebarOpen] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const { sessions, activeSessionId, deleteSession } = useOptimizer();
 
@@ -76,25 +73,10 @@ export default function BillingPage() {
                 onNewSession={() => router.push("/app/amplify")}
                 onLoadSession={(id) => router.push(`/app/amplify?session=${id}`)}
                 onDeleteSession={deleteSession}
-                isOpen={sidebarOpen}
-                onToggle={() => setSidebarOpen(!sidebarOpen)}
                 onLogoutClick={() => setShowLogoutModal(true)}
             />
 
             <div className="flex-1 lg:ml-[280px] flex flex-col min-w-0">
-                {/* Mobile header */}
-                <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-md border-b border-border">
-                    <button onClick={() => setSidebarOpen(true)} className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-black/5 text-foreground transition-colors">
-                        <div className="flex flex-col gap-1.5 items-center justify-center w-5">
-                            <span className="h-0.5 w-full bg-foreground rounded-full" />
-                            <span className="h-0.5 w-full bg-foreground rounded-full" />
-                            <span className="h-0.5 w-3/4 self-start bg-foreground rounded-full" />
-                        </div>
-                    </button>
-                    <Link href="/app"><Logo className="h-6 w-auto" alt="Zofu" /></Link>
-                    <div className="w-10" />
-                </header>
-
                 <main className="flex-1 overflow-y-auto px-6 py-8 lg:px-12">
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
                         <div className="flex items-center gap-3 mb-1">

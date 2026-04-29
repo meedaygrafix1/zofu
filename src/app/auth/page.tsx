@@ -147,7 +147,7 @@ function AuthPageContent() {
     const isResetSent = view === "resetSent";
 
     return (
-        <div className="min-h-screen bg-background flex font-sans text-foreground selection:bg-primary/20 selection:text-primary relative isolate">
+        <div data-theme="light" className="min-h-screen bg-background flex font-sans text-foreground selection:bg-primary/20 selection:text-primary relative isolate">
             {/* Decorative Grid */}
             <div className="absolute inset-0 bg-grid-pattern opacity-50 pointer-events-none -z-10" />
 

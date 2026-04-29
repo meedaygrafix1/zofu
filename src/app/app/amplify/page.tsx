@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Logout01Icon } from "hugeicons-react";
 import Sidebar from "@/components/Sidebar";
@@ -16,7 +15,6 @@ import KeywordChecklist from "@/components/KeywordChecklist";
 import InterviewPrep from "@/components/InterviewPrep";
 import { useOptimizer } from "@/context/OptimizerContext";
 import { useProStatus } from "@/hooks/useProStatus";
-import Logo from "@/components/Logo";
 
 // Keyword interfaces moved to context and API types
 
@@ -53,7 +51,6 @@ export default function Home() {
   } = useOptimizer();
 
   // Layout state
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const { isPro } = useProStatus();
 
@@ -80,47 +77,12 @@ export default function Home() {
         onDeleteSession={deleteSession}
         resumeContext={resumeText}
         jobContext={jobDescription}
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
         onLogoutClick={() => setShowLogoutModal(true)}
       />
 
       {/* Main workspace - offset by the fixed sidebar width on desktop */}
       <div className="flex-1 lg:ml-[280px] flex flex-col min-w-0">
 
-        {/* Mobile Header Navigation */}
-        <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-md border-b border-border">
-          {/* Left: Mobile Hamburger */}
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-black/5 text-foreground transition-colors"
-            aria-label="Open sidebar"
-          >
-            <div className="flex flex-col gap-1.5 items-center justify-center w-5">
-              <span className="h-0.5 w-full bg-foreground rounded-full"></span>
-              <span className="h-0.5 w-full bg-foreground rounded-full"></span>
-              <span className="h-0.5 w-3/4 self-start bg-foreground rounded-full"></span>
-            </div>
-          </button>
-
-          {/* Center: Logo */}
-          <Link href="/app" className="flex items-center">
-            <Logo className="h-6 w-auto" alt="Zofu Logo" />
-          </Link>
-
-          {/* Right: Logout */}
-          <button
-            onClick={() => setShowLogoutModal(true)}
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-danger hover:bg-danger/10 transition-colors"
-            aria-label="Sign Out"
-          >
-            <svg className="w-5 h-5 block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-              <polyline points="16 17 21 12 16 7"></polyline>
-              <line x1="21" y1="12" x2="9" y2="12"></line>
-            </svg>
-          </button>
-        </header>
 
         {/* Main Content Area */}
         <div className="flex-1 overflow-hidden relative flex flex-col">

@@ -50,7 +50,7 @@ export default function LandingPage() {
     setBannerVisible(false);
   };
   return (
-    <div className="min-h-screen bg-background bg-grid-pattern text-foreground flex flex-col font-sans selection:bg-primary/20 selection:text-primary relative">
+    <div data-theme="light" className="min-h-screen bg-background bg-grid-pattern text-foreground flex flex-col font-sans selection:bg-primary/20 selection:text-primary relative">
 
       {/* Announcement Banner — fixed above the navbar */}
       <AnimatePresence>

@@ -1,5 +1,5 @@
 import { OptimizerProvider } from "@/context/OptimizerContext";
-import { ThemeProvider } from "@/components/ThemeProvider";
+import { SidebarProvider } from "@/context/SidebarContext";
 import DashboardTopNav from "@/components/DashboardTopNav";
 
 export default function AppLayout({
@@ -8,13 +8,11 @@ export default function AppLayout({
     children: React.ReactNode;
 }) {
     return (
-        // This ThemeProvider overrides the root layout's forcedTheme="light",
-        // enabling dark mode only within the /app/* dashboard routes.
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <SidebarProvider>
             <OptimizerProvider>
                 <DashboardTopNav />
                 {children}
             </OptimizerProvider>
-        </ThemeProvider>
+        </SidebarProvider>
     );
 }

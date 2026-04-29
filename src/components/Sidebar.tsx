@@ -6,7 +6,6 @@ import {
     Home01Icon,
     SparklesIcon,
     File01Icon,
-    Menu01Icon,
     Cancel01Icon,
     Search01Icon,
     CheckmarkBadge01Icon,
@@ -23,6 +22,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import WhatsNewModal, { useWhatsNew } from "@/components/WhatsNewModal";
 import Logo from "@/components/Logo";
+import { useSidebar } from "@/context/SidebarContext";
 
 interface SidebarProps {
     sessions: SessionData[];
@@ -115,10 +115,9 @@ export default function Sidebar({
     onNewSession,
     onLoadSession,
     onDeleteSession,
-    isOpen,
-    onToggle,
     onLogoutClick,
-}: SidebarProps) {
+}: Omit<SidebarProps, "isOpen" | "onToggle">) {
+    const { isOpen, close: onToggle } = useSidebar();
     const pathname = usePathname();
     const [searchQuery, setSearchQuery] = useState("");
     const { isPro } = useProStatus();
@@ -302,17 +301,17 @@ export default function Sidebar({
                     <div className="px-4 pb-3">
                         <a
                             href="/app/billing"
-                            className="flex flex-col gap-1 w-full rounded-xl bg-gradient-to-br from-foreground to-foreground/80 p-3.5 text-white group hover:opacity-95 transition-opacity"
+                            className="flex flex-col gap-1 w-full rounded-xl bg-gradient-to-br from-foreground to-foreground/80 p-3.5 text-background group hover:opacity-95 transition-opacity"
                         >
                             <div className="flex items-center justify-between mb-0.5">
-                                <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-white/60">
+                                <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider opacity-70">
                                     <SparklesIcon className="h-3.5 w-3.5" />
                                     Pro Plan
                                 </span>
-                                <span className="text-[10px] font-bold bg-white/15 px-1.5 py-0.5 rounded-full">Coming Soon</span>
+                                <span className="text-[10px] font-bold bg-background/15 px-1.5 py-0.5 rounded-full">Coming Soon</span>
                             </div>
                             <p className="text-[12px] font-semibold leading-snug">Unlock AI Cover Letters &amp; more</p>
-                            <p className="text-[11px] text-white/60 mt-0.5">₦2,000/mo · Unlimited optimizations</p>
+                            <p className="text-[11px] opacity-70 mt-0.5">₦2,000/mo · Unlimited optimizations</p>
                         </a>
                     </div>
                 )}
