@@ -166,6 +166,11 @@ export async function extractTextFromPDF(
     pdfBuffer: Buffer
 ): Promise<{ text: string; pages: number }> {
     try {
+        // Polyfill DOMMatrix for Vercel Node.js environment
+        if (typeof globalThis.DOMMatrix === "undefined") {
+            globalThis.DOMMatrix = class DOMMatrix {} as any;
+        }
+
         // Use pdf-parse which is designed specifically for Node.js environments
         // and doesn't rely on browser APIs like DOMMatrix or Canvas.
         const pdfModule = await import("pdf-parse");
