@@ -23,6 +23,9 @@ export const metadata: Metadata = {
       "Amplify your resume for any job description. AI-powered ATS optimization, keyword matching, and interview preparation.",
     type: "website",
   },
+  icons: {
+    icon: "/Favicon.png",
+  },
 };
 
 export default function RootLayout({

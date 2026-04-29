@@ -148,8 +148,6 @@ export default function ProfilePage() {
                 onNewSession={() => router.push("/app/amplify")}
                 onLoadSession={(id) => router.push(`/app/amplify?session=${id}`)}
                 onDeleteSession={deleteSession}
-                isOpen={sidebarOpen}
-                onToggle={() => setSidebarOpen(!sidebarOpen)}
                 onLogoutClick={() => setShowLogoutModal(true)}
             />
 
