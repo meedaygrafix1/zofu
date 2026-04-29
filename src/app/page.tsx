@@ -14,6 +14,7 @@ import {
 } from "hugeicons-react";
 import { HeroDashboardMockup } from "@/components/HeroDashboardMockup";
 import { HowItWorksSection } from "@/components/HowItWorksSection";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const BANNER_ID = "announcement_banner_v1_3_0";
 
@@ -100,7 +101,7 @@ export default function LandingPage() {
 
       {/* Navbar — shifts down when banner is visible */}
       <nav
-        className="fixed inset-x-0 z-50 bg-white/80 backdrop-blur-md border-b border-border transition-[top] duration-300 ease-in-out"
+        className="fixed inset-x-0 z-50 bg-background/80 backdrop-blur-md border-b border-border transition-[top] duration-300 ease-in-out"
         style={{ top: bannerHeight }}
       >
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -116,10 +117,11 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/auth?view=signup"
-              className="bg-foreground text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-black transition-transform hover:scale-105 inline-flex items-center justify-center h-9"
+              className="bg-foreground text-background px-4 py-2 rounded-full text-sm font-medium hover:opacity-90 transition-transform hover:scale-105 inline-flex items-center justify-center h-9"
             >
               Start Free
             </Link>
+            <ThemeToggle />
           </div>
         </div>
       </nav>
@@ -167,13 +169,13 @@ export default function LandingPage() {
             >
               <Link
                 href="/auth?view=signup"
-                className="w-full sm:w-[280px] h-14 px-8 rounded-full bg-foreground text-white font-semibold text-lg hover:bg-black transition-all shadow-lg shadow-black/10 hover:shadow-black/20 hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                className="w-full sm:w-[280px] h-14 px-8 rounded-full bg-foreground text-background font-semibold text-lg hover:opacity-90 transition-all shadow-lg shadow-black/10 hover:shadow-black/20 hover:-translate-y-0.5 flex items-center justify-center gap-2"
               >
                 Try for Free
               </Link>
               <Link
                 href="#how-it-works"
-                className="w-full sm:w-[280px] h-14 px-8 rounded-full bg-white text-foreground border-2 border-border font-semibold text-lg hover:bg-surface-sunken hover:border-foreground/20 transition-all flex items-center justify-center"
+                className="w-full sm:w-[280px] h-14 px-8 rounded-full bg-surface-elevated text-foreground border-2 border-border font-semibold text-lg hover:bg-surface-sunken hover:border-foreground/20 transition-all flex items-center justify-center"
               >
                 See How It Works
               </Link>
@@ -253,7 +255,7 @@ export default function LandingPage() {
         <HowItWorksSection />
 
         {/* 5. Interview Intelligence */}
-        <section className="bg-foreground text-white border-b border-border relative overflow-hidden">
+        <section className="bg-slate-900 text-white border-b border-border relative overflow-hidden dark:bg-slate-950">
           <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 blur-[100px] rounded-full pointer-events-none" />
           <div className="max-w-7xl mx-auto py-24 px-6 grid md:grid-cols-2 gap-16 items-center border-x border-white/10 relative z-20">
             <div className="space-y-6 z-10">
@@ -263,7 +265,7 @@ export default function LandingPage() {
               </p>
               <Link
                 href="/auth?view=signup"
-                className="inline-flex items-center justify-center gap-2 h-14 px-8 bg-white text-foreground font-semibold text-lg rounded-full hover:bg-white/90 transition-colors"
+                className="inline-flex items-center justify-center gap-2 h-14 px-8 bg-white text-slate-900 font-semibold text-lg rounded-full hover:bg-white/90 transition-colors"
               >
                 Try the AI Coach <BotIcon className="w-5 h-5" />
               </Link>
@@ -299,7 +301,7 @@ export default function LandingPage() {
               <div className="pt-4">
                 <Link
                   href="/auth?view=signup"
-                  className="inline-flex items-center justify-center h-14 px-8 rounded-full bg-foreground text-white font-semibold text-lg hover:bg-black transition-transform hover:scale-105 shadow-xl shadow-black/10"
+                  className="inline-flex items-center justify-center h-14 px-8 rounded-full bg-foreground text-background font-semibold text-lg hover:opacity-90 transition-transform hover:scale-105 shadow-xl shadow-black/10"
                 >
                   Start Your First Optimization
                 </Link>
@@ -310,9 +312,9 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-white py-12 text-center text-sm text-muted">
+      <footer className="border-t border-border bg-surface-elevated py-12 text-center text-sm text-muted">
         <div className="flex items-center justify-center gap-2 mb-4">
-          <img src="/zofu-logo.png" alt="Zofu" className="h-4 w-auto grayscale opacity-50" />
+          <img src="/zofu-logo.png" alt="Zofu" className="h-4 w-auto grayscale opacity-50 dark:invert" />
         </div>
         <p>&copy; {new Date().getFullYear()} ZOFU. All rights reserved.</p>
       </footer>

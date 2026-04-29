@@ -7,7 +7,11 @@ export async function POST(request: NextRequest) {
         const supabase = await createClient();
         const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-        if (!user || authError) {
+        if (authError) {
+            console.warn("[amplify/parse] Auth warning:", authError.message);
+        }
+
+        if (!user) {
             return NextResponse.json(
                 { error: "Unauthorized access" },
                 { status: 401 }

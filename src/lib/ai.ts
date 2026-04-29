@@ -165,14 +165,20 @@ export async function generateInterviewQuestions(
 export async function extractTextFromPDF(
     pdfBuffer: Buffer
 ): Promise<{ text: string; pages: number }> {
-    // With pdfjs-dist externalized via serverExternalPackages, we can resolve
-    // the real worker file path from disk and avoid all Turbopack bundling issues.
-    const { createRequire } = await import("module");
-    const require = createRequire(import.meta.url);
+    // pdfjs-dist v5 requires a non-empty workerSrc (rejects "" and bare paths).
+    // process.cwd() is always the project root in Next.js, so we build the
+    // absolute worker path from there and convert it via pathToFileURL — which
+    // correctly handles Windows drive letters and backslashes on all platforms.
+    const { resolve: pathResolve } = await import("path");
+    const { pathToFileURL } = await import("url");
 
     const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
-    const workerPath = require.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs");
-    pdfjsLib.GlobalWorkerOptions.workerSrc = workerPath;
+
+    const workerAbsPath = pathResolve(
+        process.cwd(),
+        "node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs"
+    );
+    pdfjsLib.GlobalWorkerOptions.workerSrc = pathToFileURL(workerAbsPath).href;
 
     const data = new Uint8Array(pdfBuffer);
     const doc = await pdfjsLib.getDocument({
@@ -181,6 +187,7 @@ export async function extractTextFromPDF(
         disableRange: true,
         disableStream: true,
         isEvalSupported: false,
+        disableFontFace: true,
     }).promise;
 
     const numPages = doc.numPages;
@@ -191,6 +198,7 @@ export async function extractTextFromPDF(
         const content = await page.getTextContent();
         const pageText = content.items
             .map((item: any) => ("str" in item ? item.str : ""))
+            .filter(Boolean)
             .join(" ");
         textParts.push(pageText);
         page.cleanup();
@@ -199,7 +207,7 @@ export async function extractTextFromPDF(
     await doc.destroy();
 
     const text = textParts.join("\n").trim();
-    if (!text) throw new Error("No text content found in PDF");
+    if (!text) throw new Error("No readable text found in PDF. The file may be scanned/image-based.");
 
     return { text, pages: numPages };
 }

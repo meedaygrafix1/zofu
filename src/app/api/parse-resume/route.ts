@@ -7,11 +7,12 @@ export async function POST(request: NextRequest) {
         const supabase = await createClient();
         const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-        if (!user || authError) {
-            return NextResponse.json(
-                { error: "Unauthorized access" },
-                { status: 401 }
-            );
+        if (authError) {
+            console.warn("[parse-resume] Auth warning:", authError.message);
+        }
+
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
         }
 
         const formData = await request.formData();

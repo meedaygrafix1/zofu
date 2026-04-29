@@ -28,6 +28,33 @@
   --gradient-end: #8b5cf6;
 }
 
+.dark {
+  --background: #020817;     /* Very dark blue, almost black */
+  --foreground: #f8fafc;     /* Slate 50 */
+  --card-bg: #0f172a;        /* Slate 900 */
+  --card-border: #1e293b;    /* Slate 800 */
+  --primary: #3b82f6;        /* Blue 500 */
+  --primary-hover: #60a5fa;  /* Blue 400 */
+  --primary-light: #1e3a8a;  /* Blue 900 */
+  --primary-ultra-light: #172554; /* Blue 950 */
+  --accent: #a78bfa;         /* Violet 400 */
+  --accent-light: #4c1d95;   /* Violet 900 */
+  --success: #10b981;        /* Emerald 500 */
+  --success-light: #064e3b;  /* Emerald 900 */
+  --warning: #f59e0b;        /* Amber 500 */
+  --warning-light: #78350f;  /* Amber 900 */
+  --danger: #ef4444;         /* Red 500 */
+  --danger-light: #7f1d1d;   /* Red 900 */
+  --muted: #94a3b8;          /* Slate 400 */
+  --muted-light: #475569;    /* Slate 600 */
+  --border: #1e293b;         /* Slate 800 */
+  --border-strong: #334155;  /* Slate 700 */
+  --surface-elevated: #0f172a; /* Slate 900 */
+  --surface-sunken: #020817;  /* Very dark blue */
+  --gradient-start: #3b82f6;
+  --gradient-end: #a78bfa;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
