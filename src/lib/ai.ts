@@ -166,22 +166,38 @@ export async function extractTextFromPDF(
     pdfBuffer: Buffer
 ): Promise<{ text: string; pages: number }> {
     try {
-        // Polyfill DOMMatrix — some pdf-parse builds reference it at import time
+        // Polyfill DOMMatrix — pdf-parse's internal pdf.js references it on load
         if (typeof globalThis.DOMMatrix === "undefined") {
             // @ts-ignore
             globalThis.DOMMatrix = class DOMMatrix {};
         }
 
-        // pdf-parse is a CJS module. Using createRequire (instead of dynamic
-        // import) guarantees the native Node.js module resolution is used and
-        // avoids the ".default is not a function" error caused by Next.js
-        // bundling/minifying CJS modules when using ESM import() syntax.
-        const { createRequire } = await import("module");
-        const require = createRequire(import.meta.url);
-        const pdfParse = require("pdf-parse") as (
-            buffer: Buffer,
-            options?: object
-        ) => Promise<{ text: string; numpages: number }>;
+        // eval('require') is the only reliable way to bypass Next.js/Turbopack
+        // static bundler analysis. import() and createRequire() both get
+        // rewritten at compile time, causing ".default is not a function" or
+        // "o is not a function" after minification. eval() is opaque to the
+        // bundler so pdf-parse is resolved natively by Node.js at runtime.
+        // eslint-disable-next-line no-eval
+        const pdfParseModule = eval("require")("pdf-parse");
+
+        // Handle pdf-parse v1 (exports a function directly) and
+        // v2 (exports an object with a PDFParse class)
+        let pdfParse: (buf: Buffer) => Promise<{ text: string; numpages: number }>;
+
+        if (typeof pdfParseModule === "function") {
+            // v1 API
+            pdfParse = pdfParseModule;
+        } else if (typeof pdfParseModule?.default === "function") {
+            pdfParse = pdfParseModule.default;
+        } else if (pdfParseModule?.PDFParse) {
+            // v2 API — PDFParse is a class with a .pdf() method
+            pdfParse = (buf: Buffer) => {
+                const parser = new pdfParseModule.PDFParse();
+                return parser.pdf(buf);
+            };
+        } else {
+            throw new Error(`pdf-parse module has unexpected structure: ${Object.keys(pdfParseModule || {}).join(", ")}`);
+        }
 
         const data = await pdfParse(pdfBuffer);
 

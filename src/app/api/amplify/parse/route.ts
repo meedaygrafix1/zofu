@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { extractTextFromPDF } from "@/lib/ai";
 import { createClient } from "@/utils/supabase/server";
 
+// Force Node.js runtime — this route uses native require() to load pdf-parse
+// and must never run on the Edge runtime which lacks Node module support.
+export const runtime = "nodejs";
+
 export async function POST(request: NextRequest) {
     try {
         const supabase = await createClient();
