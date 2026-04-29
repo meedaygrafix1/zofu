@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   SparklesIcon,
   CheckmarkBadge01Icon,
@@ -19,11 +19,30 @@ const BANNER_ID = "announcement_banner_v1_3_0";
 
 export default function LandingPage() {
   const [bannerVisible, setBannerVisible] = useState(false);
+  const [bannerHeight, setBannerHeight] = useState(0);
+  const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const dismissed = localStorage.getItem(BANNER_ID);
     if (!dismissed) setBannerVisible(true);
   }, []);
+
+  // Measure banner height dynamically
+  useEffect(() => {
+    if (!bannerVisible || !bannerRef.current) {
+      setBannerHeight(0);
+      return;
+    }
+    const el = bannerRef.current;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setBannerHeight(entry.contentRect.height);
+      }
+    });
+    observer.observe(el);
+    setBannerHeight(el.offsetHeight);
+    return () => observer.disconnect();
+  }, [bannerVisible]);
 
   const dismissBanner = () => {
     localStorage.setItem(BANNER_ID, "dismissed");
@@ -32,16 +51,17 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background bg-grid-pattern text-foreground flex flex-col font-sans selection:bg-primary/20 selection:text-primary relative">
 
-      {/* Announcement Banner */}
+      {/* Announcement Banner — fixed above the navbar */}
       <AnimatePresence>
         {bannerVisible && (
           <motion.div
+            ref={bannerRef}
             key="announcement-banner"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="relative z-[60] overflow-hidden"
+            className="fixed top-0 inset-x-0 z-[60] overflow-hidden"
           >
             <div className="bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a] text-white px-4 py-2.5 flex items-center justify-center gap-3 text-sm">
               {/* Glow blobs */}
@@ -78,8 +98,11 @@ export default function LandingPage() {
         )}
       </AnimatePresence>
 
-      {/* Navbar */}
-      <nav className="fixed top-0 inset-x-0 z-50 bg-white/80 backdrop-blur-md border-b border-border">
+      {/* Navbar — shifts down when banner is visible */}
+      <nav
+        className="fixed inset-x-0 z-50 bg-white/80 backdrop-blur-md border-b border-border transition-[top] duration-300 ease-in-out"
+        style={{ top: bannerHeight }}
+      >
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img src="/zofu-logo.png" alt="Zofu" className="h-6 w-auto" />
@@ -101,7 +124,7 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      <main className="flex-1 pt-24">
+      <main className="flex-1 transition-[padding-top] duration-300 ease-in-out" style={{ paddingTop: bannerHeight + 64 + 24 }}>
         {/* 1. Hero Section */}
         <section className="border-b border-border border-t mt-8">
           <div className="max-w-7xl mx-auto px-6 py-20 text-center space-y-8 relative border-x border-border bg-background/80 backdrop-blur-sm">
