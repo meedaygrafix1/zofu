@@ -17,7 +17,7 @@ function getClient() {
 
 function getModel() {
     const model = process.env.AI_MODEL;
-    return model || "gemini-3.0-flash";
+    return model || "gemini-2.5-flash";
 }
 
 function parseAIResponse<T>(content: string): T {

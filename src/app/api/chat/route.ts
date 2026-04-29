@@ -42,7 +42,7 @@ Keep your responses concise, practical, and actionable. Use bullet points when l
             systemInstruction += `\n\nThe user is targeting a job with this description:\n${jobContext.slice(0, 2000)}`;
         }
 
-        const model = process.env.AI_MODEL || "gemini-2.0-flash";
+        const model = process.env.AI_MODEL || "gemini-2.5-flash";
 
         const google = createGoogleGenerativeAI({
             apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY,
