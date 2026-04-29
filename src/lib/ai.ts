@@ -166,27 +166,32 @@ export async function extractTextFromPDF(
     pdfBuffer: Buffer
 ): Promise<{ text: string; pages: number }> {
     try {
-        // Polyfill DOMMatrix for Vercel Node.js environment
+        // Polyfill DOMMatrix — some pdf-parse builds reference it at import time
         if (typeof globalThis.DOMMatrix === "undefined") {
-            globalThis.DOMMatrix = class DOMMatrix {} as any;
+            // @ts-ignore
+            globalThis.DOMMatrix = class DOMMatrix {};
         }
 
-        // Use pdf-parse which is designed specifically for Node.js environments
-        // and doesn't rely on browser APIs like DOMMatrix or Canvas.
-        const pdfModule = await import("pdf-parse");
-        // @ts-ignore - TS doesn't know about default export for this CJS module
-        const pdfParse = pdfModule.default || pdfModule;
-        
-        // pdf-parse can take a Buffer directly
-        const data = await typeof pdfParse === 'function' ? pdfParse(pdfBuffer) : pdfParse.default(pdfBuffer);
-        
-        if (!data || !data.text || data.text.trim() === "") {
-            throw new Error("No readable text found in PDF. The file may be scanned/image-based.");
+        // pdf-parse is a CJS module. Using createRequire (instead of dynamic
+        // import) guarantees the native Node.js module resolution is used and
+        // avoids the ".default is not a function" error caused by Next.js
+        // bundling/minifying CJS modules when using ESM import() syntax.
+        const { createRequire } = await import("module");
+        const require = createRequire(import.meta.url);
+        const pdfParse = require("pdf-parse") as (
+            buffer: Buffer,
+            options?: object
+        ) => Promise<{ text: string; numpages: number }>;
+
+        const data = await pdfParse(pdfBuffer);
+
+        if (!data?.text?.trim()) {
+            throw new Error("No readable text found in PDF. The file may be scanned or image-based.");
         }
 
-        return { 
-            text: data.text.trim(), 
-            pages: data.numpages || 1 
+        return {
+            text: data.text.trim(),
+            pages: data.numpages || 1,
         };
     } catch (error: any) {
         console.error("PDF extraction error:", error);
