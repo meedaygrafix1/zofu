@@ -14,8 +14,99 @@ import {
     Cancel01Icon,
     FileAttachmentIcon,
     Loading03Icon,
+    Alert02Icon,
 } from "hugeicons-react";
 import ReactMarkdown from "react-markdown";
+
+// ─── File Size Limit Modal ────────────────────────────────────────────────────
+function FileSizeModal({
+    fileSize,
+    onClose,
+}: {
+    fileSize: number;
+    onClose: () => void;
+}) {
+    const sizeMB = (fileSize / (1024 * 1024)).toFixed(2);
+
+    return (
+        <AnimatePresence>
+            <motion.div
+                key="file-size-modal-overlay"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 flex items-center justify-center px-4"
+                style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
+                onClick={onClose}
+            >
+                <motion.div
+                    key="file-size-modal-card"
+                    initial={{ opacity: 0, scale: 0.92, y: 24 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.92, y: 24 }}
+                    transition={{ type: "spring", stiffness: 340, damping: 28 }}
+                    className="relative w-full max-w-sm rounded-2xl bg-white border border-border shadow-2xl overflow-hidden"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {/* Accent strip */}
+                    <div className="h-1 w-full" style={{ background: "linear-gradient(90deg,#ef4444,#f97316)" }} />
+
+                    <div className="p-6 flex flex-col gap-4">
+                        {/* Icon + heading */}
+                        <div className="flex items-start gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50 border border-red-100">
+                                <Alert02Icon className="h-5 w-5 text-red-500" strokeWidth={2} />
+                            </div>
+                            <div>
+                                <h2 className="text-[15px] font-semibold text-foreground leading-tight">
+                                    File too large
+                                </h2>
+                                <p className="text-[12px] text-muted mt-0.5">
+                                    Maximum allowed size is <strong>5&nbsp;MB</strong>
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Size pill */}
+                        <div className="flex items-center justify-between rounded-xl bg-red-50 border border-red-100 px-4 py-3">
+                            <span className="text-[12px] text-red-600 font-medium">Your file</span>
+                            <span className="text-[13px] font-bold text-red-600">{sizeMB}&nbsp;MB</span>
+                        </div>
+
+                        {/* Tips */}
+                        <ul className="space-y-1.5 text-[12px] text-muted">
+                            <li className="flex items-start gap-1.5">
+                                <span className="mt-0.5 text-primary">•</span>
+                                Compress your PDF using a tool like{" "}
+                                <a
+                                    href="https://smallpdf.com/compress-pdf"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="underline hover:text-foreground transition-colors"
+                                >
+                                    Smallpdf
+                                </a>
+                                .
+                            </li>
+                            <li className="flex items-start gap-1.5">
+                                <span className="mt-0.5 text-primary">•</span>
+                                Remove embedded images before uploading.
+                            </li>
+                        </ul>
+
+                        {/* CTA */}
+                        <button
+                            onClick={onClose}
+                            className="w-full mt-1 py-2.5 rounded-xl bg-[#111827] text-white text-[13px] font-semibold hover:bg-black transition-colors"
+                        >
+                            Got it, try another file
+                        </button>
+                    </div>
+                </motion.div>
+            </motion.div>
+        </AnimatePresence>
+    );
+}
 
 interface ChatPanelProps {
     resumeContext?: string;
@@ -37,6 +128,7 @@ export default function ChatPanel({ resumeContext, jobContext }: ChatPanelProps)
     const [uploadedResumeText, setUploadedResumeText] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadError, setUploadError] = useState<string | null>(null);
+    const [fileSizeModalBytes, setFileSizeModalBytes] = useState<number | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const isLoading = status === "submitted" || status === "streaming";
 
@@ -63,8 +155,9 @@ export default function ChatPanel({ resumeContext, jobContext }: ChatPanelProps)
             return;
         }
 
-        if (file.size > 10 * 1024 * 1024) {
-            setUploadError("File size must be under 10MB.");
+        if (file.size > 5 * 1024 * 1024) {
+            setFileSizeModalBytes(file.size);
+            if (fileInputRef.current) fileInputRef.current.value = "";
             return;
         }
 
@@ -144,6 +237,15 @@ export default function ChatPanel({ resumeContext, jobContext }: ChatPanelProps)
     };
 
     return (
+        <>
+        {/* File size limit modal */}
+        {fileSizeModalBytes !== null && (
+            <FileSizeModal
+                fileSize={fileSizeModalBytes}
+                onClose={() => setFileSizeModalBytes(null)}
+            />
+        )}
+
         <div className="chat-panel h-full flex flex-col relative w-full overflow-hidden p-2 lg:p-4">
             <div className="chat-panel-body flex-1 overflow-hidden h-full flex flex-col">
                 {/* Messages area */}
@@ -381,5 +483,6 @@ export default function ChatPanel({ resumeContext, jobContext }: ChatPanelProps)
                 </div>
             </div>
         </div>
+        </>
     );
 }

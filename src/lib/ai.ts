@@ -55,7 +55,7 @@ function parseAIResponse<T>(content: string): T {
 async function withRetry<T>(
     operation: () => Promise<T>,
     maxRetries: number = 3,
-    baseDelayMs: number = 1500
+    baseDelayMs: number = 2000
 ): Promise<T> {
     let attempt = 0;
     while (attempt < maxRetries) {
