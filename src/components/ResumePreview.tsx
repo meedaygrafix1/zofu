@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Copy01Icon, CheckmarkCircle01Icon, EyeIcon, GitCompareIcon, File01Icon, File02Icon } from "hugeicons-react";
+import {
+    Copy01Icon, CheckmarkCircle01Icon, EyeIcon, GitCompareIcon,
+    File01Icon, File02Icon, PencilEdit01Icon, TickDouble01Icon,
+} from "hugeicons-react";
 import ReactMarkdown from 'react-markdown';
 
 interface Change {
@@ -34,6 +37,7 @@ interface ResumePreviewProps {
     changes: Change[];
     isLoading: boolean;
     isPro?: boolean;
+    onEdit?: (text: string) => void;
 }
 
 export default function ResumePreview({
@@ -43,13 +47,15 @@ export default function ResumePreview({
     changes,
     isLoading,
     isPro = false,
+    onEdit,
 }: ResumePreviewProps) {
-    const [viewMode, setViewMode] = useState<"amplified" | "diff" | "original" | "coverLetter">(
-        "amplified"
-    );
+    const [viewMode, setViewMode] = useState<"amplified" | "diff" | "original" | "coverLetter">("amplified");
     const [copied, setCopied] = useState(false);
     const [showDownloadMenu, setShowDownloadMenu] = useState(false);
     const [isDownloading, setIsDownloading] = useState<string | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [wordCount, setWordCount] = useState(0);
+    const editorRef = useRef<HTMLDivElement>(null);
     const downloadMenuRef = useRef<HTMLDivElement>(null);
 
     // Close dropdown on click outside
@@ -64,6 +70,47 @@ export default function ResumePreview({
             return () => document.removeEventListener("mousedown", handleClickOutside);
         }
     }, [showDownloadMenu]);
+
+    // Sync editor content when amplifiedText changes externally (e.g. after new amplify run)
+    useEffect(() => {
+        if (editorRef.current && !isEditing) {
+            editorRef.current.innerText = amplifiedText;
+            countWords(amplifiedText);
+        }
+    }, [amplifiedText, isEditing]);
+
+    const countWords = useCallback((text: string) => {
+        const words = text.trim().split(/\s+/).filter(Boolean);
+        setWordCount(words.length);
+    }, []);
+
+    const handleEditorInput = useCallback(() => {
+        if (!editorRef.current) return;
+        const text = editorRef.current.innerText;
+        countWords(text);
+        onEdit?.(text);
+    }, [onEdit, countWords]);
+
+    const execCmd = (cmd: string, value?: string) => {
+        editorRef.current?.focus();
+        document.execCommand(cmd, false, value);
+    };
+
+    const enterEditMode = () => {
+        setIsEditing(true);
+        setViewMode("amplified");
+        setTimeout(() => {
+            if (editorRef.current) {
+                editorRef.current.innerText = amplifiedText;
+                editorRef.current.focus();
+                countWords(amplifiedText);
+            }
+        }, 50);
+    };
+
+    const exitEditMode = () => {
+        setIsEditing(false);
+    };
 
     const textToCopy = viewMode === "coverLetter" ? coverLetter || "" : amplifiedText;
     const textToDownload = viewMode === "coverLetter" ? coverLetter || "" : amplifiedText;
@@ -515,7 +562,7 @@ export default function ResumePreview({
                         ].map(({ id, label, icon: Icon }) => (
                             <button
                                 key={id}
-                                onClick={() => setViewMode(id)}
+                                onClick={() => { setViewMode(id); if (id !== "amplified") setIsEditing(false); }}
                                 className={`
                                     flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all snap-center whitespace-nowrap
                                     ${viewMode === id
@@ -533,6 +580,23 @@ export default function ResumePreview({
 
                 {amplifiedText && (
                     <div className="flex items-center gap-2 w-full sm:w-auto">
+                        {/* Edit / Done toggle — only on Amplified tab */}
+                        {viewMode === "amplified" && onEdit && (
+                            <motion.button
+                                whileTap={{ scale: 0.95 }}
+                                onClick={isEditing ? exitEditMode : enterEditMode}
+                                className={`flex flex-1 sm:flex-none items-center justify-center gap-1.5 rounded-lg px-3 py-2 sm:py-1.5 text-sm sm:text-xs font-medium transition-all ${
+                                    isEditing
+                                        ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm"
+                                        : "bg-surface-elevated border border-border text-foreground shadow-sm hover:bg-surface-sunken"
+                                }`}
+                            >
+                                {isEditing
+                                    ? <><TickDouble01Icon className="h-3.5 w-3.5" /> Done</>  
+                                    : <><PencilEdit01Icon className="h-3.5 w-3.5" /> Edit</>}
+                            </motion.button>
+                        )}
+
                         {/* Copy Button */}
                         <motion.button
                             whileTap={{ scale: 0.95 }}
@@ -624,6 +688,73 @@ export default function ResumePreview({
                 )}
             </div>
 
+            {/* Formatting Toolbar — visible only in edit mode */}
+            <AnimatePresence>
+                {isEditing && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.15 }}
+                        className="flex flex-wrap items-center gap-1 px-4 py-2 border-b border-border bg-surface-sunken"
+                    >
+                        {/* Bold */}
+                        <button onMouseDown={e => { e.preventDefault(); execCmd("bold"); }}
+                            className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-border font-bold text-sm text-foreground transition-colors" title="Bold (Ctrl+B)">
+                            B
+                        </button>
+                        {/* Italic */}
+                        <button onMouseDown={e => { e.preventDefault(); execCmd("italic"); }}
+                            className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-border italic text-sm text-foreground transition-colors" title="Italic (Ctrl+I)">
+                            I
+                        </button>
+                        {/* Underline */}
+                        <button onMouseDown={e => { e.preventDefault(); execCmd("underline"); }}
+                            className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-border underline text-sm text-foreground transition-colors" title="Underline (Ctrl+U)">
+                            U
+                        </button>
+
+                        <div className="w-px h-5 bg-border mx-1" />
+
+                        {/* Bullet list */}
+                        <button onMouseDown={e => { e.preventDefault(); execCmd("insertUnorderedList"); }}
+                            className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-border text-foreground transition-colors" title="Bullet list">
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="9" y1="6" x2="20" y2="6" /><line x1="9" y1="12" x2="20" y2="12" /><line x1="9" y1="18" x2="20" y2="18" />
+                                <circle cx="4" cy="6" r="1" fill="currentColor" /><circle cx="4" cy="12" r="1" fill="currentColor" /><circle cx="4" cy="18" r="1" fill="currentColor" />
+                            </svg>
+                        </button>
+                        {/* Ordered list */}
+                        <button onMouseDown={e => { e.preventDefault(); execCmd("insertOrderedList"); }}
+                            className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-border text-foreground transition-colors" title="Numbered list">
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="10" y1="6" x2="21" y2="6" /><line x1="10" y1="12" x2="21" y2="12" /><line x1="10" y1="18" x2="21" y2="18" />
+                                <path d="M4 6h1v4" /><path d="M4 10h2" /><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1" />
+                            </svg>
+                        </button>
+
+                        <div className="w-px h-5 bg-border mx-1" />
+
+                        {/* Undo */}
+                        <button onMouseDown={e => { e.preventDefault(); execCmd("undo"); }}
+                            className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-border text-foreground transition-colors" title="Undo (Ctrl+Z)">
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="9 14 4 9 9 4" /><path d="M20 20v-7a4 4 0 0 0-4-4H4" />
+                            </svg>
+                        </button>
+                        {/* Redo */}
+                        <button onMouseDown={e => { e.preventDefault(); execCmd("redo"); }}
+                            className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-border text-foreground transition-colors" title="Redo (Ctrl+Shift+Z)">
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="15 14 20 9 15 4" /><path d="M4 20v-7a4 4 0 0 1 4-4h12" />
+                            </svg>
+                        </button>
+
+                        <div className="ml-auto text-[10px] text-muted font-mono">{wordCount} words</div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">
                 <AnimatePresence mode="wait">
@@ -635,9 +766,20 @@ export default function ResumePreview({
                             exit={{ opacity: 0, x: -10 }}
                             className="prose prose-sm prose-blue max-w-none text-foreground"
                         >
-                            <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                                <ReactMarkdown>{amplifiedText || originalText}</ReactMarkdown>
-                            </div>
+                            {isEditing ? (
+                                <div
+                                    ref={editorRef}
+                                    contentEditable
+                                    suppressContentEditableWarning
+                                    onInput={handleEditorInput}
+                                    className="whitespace-pre-wrap text-sm leading-relaxed outline-none min-h-[300px] focus:ring-2 focus:ring-primary/20 rounded-lg p-2 -m-2 transition-all"
+                                    style={{ caretColor: "var(--color-primary)" }}
+                                />
+                            ) : (
+                                <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                                    <ReactMarkdown>{amplifiedText || originalText}</ReactMarkdown>
+                                </div>
+                            )}
                         </motion.div>
                     )}
 

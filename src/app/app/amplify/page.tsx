@@ -191,6 +191,7 @@ export default function Home() {
                     changes={changes}
                     isLoading={isAmplifying}
                     isPro={isPro}
+                    onEdit={setAmplifiedText}
                   />
                 </motion.div>
 
