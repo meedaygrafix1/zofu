@@ -46,7 +46,7 @@ export default function ResumePreview({
     coverLetter,
     changes,
     isLoading,
-    isPro = false,
+    isPro = true,
     onEdit,
 }: ResumePreviewProps) {
     const [viewMode, setViewMode] = useState<"amplified" | "diff" | "original" | "coverLetter">("amplified");
@@ -162,27 +162,27 @@ export default function ResumePreview({
                     doc.text(stripBold(text), startX, cursorY, { align: "right" });
                     return;
                 }
-                
+
                 const segments = parseBoldSegments(text);
                 for (let i = 0; i < segments.length; i++) {
                     const seg = segments[i];
                     doc.setFont("helvetica", seg.bold ? "bold" : "normal");
-                    
+
                     const tokens = seg.text.split(/(\s+)/);
                     for (const token of tokens) {
                         if (!token) continue;
                         const tokenWidth = doc.getTextWidth(token);
-                        
+
                         if (currentX + tokenWidth > startX + maxWidth && currentX > startX && !token.match(/^\s+$/)) {
                             cursorY += baseLineHeight;
                             addPageIfNeeded(baseLineHeight);
                             currentX = startX;
                         }
-                        
+
                         if (currentX === startX && token.match(/^\s+$/)) {
                             continue; // omit leading spaces wrapped to a new line
                         }
-                        
+
                         doc.text(token, currentX, cursorY);
                         currentX += tokenWidth;
                     }
@@ -585,14 +585,13 @@ export default function ResumePreview({
                             <motion.button
                                 whileTap={{ scale: 0.95 }}
                                 onClick={isEditing ? exitEditMode : enterEditMode}
-                                className={`flex flex-1 sm:flex-none items-center justify-center gap-1.5 rounded-lg px-3 py-2 sm:py-1.5 text-sm sm:text-xs font-medium transition-all ${
-                                    isEditing
-                                        ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm"
-                                        : "bg-surface-elevated border border-border text-foreground shadow-sm hover:bg-surface-sunken"
-                                }`}
+                                className={`flex flex-1 sm:flex-none items-center justify-center gap-1.5 rounded-lg px-3 py-2 sm:py-1.5 text-sm sm:text-xs font-medium transition-all ${isEditing
+                                    ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm"
+                                    : "bg-surface-elevated border border-border text-foreground shadow-sm hover:bg-surface-sunken"
+                                    }`}
                             >
                                 {isEditing
-                                    ? <><TickDouble01Icon className="h-3.5 w-3.5" /> Done</>  
+                                    ? <><TickDouble01Icon className="h-3.5 w-3.5" /> Done</>
                                     : <><PencilEdit01Icon className="h-3.5 w-3.5" /> Edit</>}
                             </motion.button>
                         )}
@@ -783,7 +782,7 @@ export default function ResumePreview({
                         </motion.div>
                     )}
 
-                    {viewMode === "coverLetter" && isPro && coverLetter && (
+                    {viewMode === "coverLetter" && coverLetter && (
                         <motion.div
                             key="coverLetter"
                             initial={{ opacity: 0, x: 10 }}
@@ -797,7 +796,7 @@ export default function ResumePreview({
                         </motion.div>
                     )}
 
-                    {viewMode === "coverLetter" && isPro && !coverLetter && (
+                    {viewMode === "coverLetter" && !coverLetter && (
                         <motion.div
                             key="coverLetter-empty"
                             initial={{ opacity: 0 }}
@@ -815,59 +814,7 @@ export default function ResumePreview({
                         </motion.div>
                     )}
 
-                    {viewMode === "coverLetter" && !isPro && (
-                        <motion.div
-                            key="coverLetter-pro-gate"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="relative overflow-hidden rounded-xl"
-                        >
-                            {/* Blurred fake letter preview */}
-                            <div className="blur-sm pointer-events-none select-none p-2 space-y-3 text-sm text-foreground/60" aria-hidden="true">
-                                {[
-                                    "Dear Hiring Manager,",
-                                    "I am writing to express my strong interest in the [Position] role at [Company]. With my background in [Field] and proven experience delivering [Key Achievement], I am confident I would be a valuable addition to your team.",
-                                    "Throughout my career, I have consistently demonstrated [Skill 1], [Skill 2], and [Skill 3]. At [Previous Company], I [Achievement with metric], which directly aligns with the goals outlined in your job description.",
-                                    "I am particularly drawn to [Company] because of its focus on [Company Value]. I believe my experience with [Relevant Experience] positions me to make an immediate impact.",
-                                    "I would welcome the opportunity to discuss how my background can contribute to your team's success. Thank you for your time and consideration.",
-                                    "Sincerely,",
-                                    "[Your Name]",
-                                ].map((line, i) => (
-                                    <p key={i}>{line}</p>
-                                ))}
-                            </div>
 
-                            {/* Lock overlay */}
-                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/70 backdrop-blur-[2px]">
-                                <div className="bg-surface-elevated rounded-2xl shadow-xl border border-border px-8 py-7 flex flex-col items-center text-center max-w-xs mx-4">
-                                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 mb-4">
-                                        <svg className="h-7 w-7 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                        </svg>
-                                    </div>
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wide mb-3">
-                                        <File02Icon className="h-3 w-3" />
-                                        Pro Feature
-                                    </span>
-                                    <h3 className="text-base font-bold text-foreground mb-1.5">AI Cover Letters</h3>
-                                    <p className="text-xs text-muted mb-5">
-                                        Unlock a tailored, job-specific cover letter generated alongside every resume optimization.
-                                    </p>
-                                    <a
-                                        href="/app/billing"
-                                        className="w-full flex items-center justify-center gap-2 h-10 px-5 rounded-xl bg-foreground text-white text-sm font-semibold hover:bg-black transition-colors shadow-sm"
-                                    >
-                                        Upgrade to Pro
-                                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M5 12h14M12 5l7 7-7 7" />
-                                        </svg>
-                                    </a>
-                                </div>
-                            </div>
-                        </motion.div>
-                    )}
 
                     {viewMode === "diff" && (
                         <motion.div
