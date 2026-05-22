@@ -14,6 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://zofu.app"
+  ),
   title: "Zofu — AI Resume Optimizer",
   description:
     "Amplify your resume for any job description. AI-powered ATS optimization, keyword matching, and interview preparation.",

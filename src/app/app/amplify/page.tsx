@@ -52,7 +52,10 @@ export default function Home() {
 
   // Layout state
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [feedbackDismissed, setFeedbackDismissed] = useState(false);
   const { isPro } = useProStatus();
+
+  const FEEDBACK_URL = "https://forms.gle/nf9daK7QV3Xyggw47";
 
   const handleSignOut = async () => {
     const { createClient } = await import('@/utils/supabase/client');
@@ -243,6 +246,63 @@ export default function Home() {
                 skills or achievements.
               </p>
             </motion.div>
+
+            {/* Post-optimization Feedback Banner */}
+            <AnimatePresence>
+              {hasResults && !feedbackDismissed && (
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 16 }}
+                  transition={{ duration: 0.35, ease: "easeOut", delay: 0.6 }}
+                  className="mt-6 mx-auto max-w-xl"
+                >
+                  <div className="
+                    relative flex flex-col sm:flex-row items-center gap-4
+                    rounded-2xl border border-primary/20
+                    bg-gradient-to-br from-primary/5 to-primary/10
+                    dark:from-primary/10 dark:to-primary/5
+                    px-5 py-4 shadow-sm
+                  ">
+                    {/* Dismiss */}
+                    <button
+                      onClick={() => setFeedbackDismissed(true)}
+                      className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full text-muted hover:text-foreground hover:bg-border transition-colors"
+                      aria-label="Dismiss feedback banner"
+                    >
+                      <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+
+                    {/* Emoji / icon */}
+                    <div className="shrink-0 w-11 h-11 flex items-center justify-center rounded-xl bg-primary/15 text-xl">
+                      🎉
+                    </div>
+
+                    {/* Text */}
+                    <div className="flex-1 text-center sm:text-left min-w-0">
+                      <p className="text-sm font-semibold text-foreground">
+                        Your resume is amplified! How was the experience?
+                      </p>
+                      <p className="text-xs text-muted mt-0.5">
+                        Your feedback helps us improve Zofu for everyone.
+                      </p>
+                    </div>
+
+                    {/* CTA */}
+                    <a
+                      href={FEEDBACK_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      id="amplify-feedback-btn"
+                      className="shrink-0 flex items-center gap-1.5 h-9 px-4 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary/90 active:scale-95 transition-all shadow-sm"
+                    >
+                      Give Feedback
+                      <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg>
+                    </a>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </main>
         </div>
       </div>

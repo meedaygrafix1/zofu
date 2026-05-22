@@ -11,7 +11,10 @@ import {
     InformationCircleIcon,
     Cancel01Icon,
     Menu01Icon,
+    MessageEdit01Icon,
 } from "hugeicons-react";
+
+const FEEDBACK_URL = "https://forms.gle/nf9daK7QV3Xyggw47";
 
 interface Notification {
     id: string;
@@ -123,6 +126,26 @@ export default function DashboardTopNav() {
 
             {/* Right controls */}
             <div className="flex items-center gap-2">
+                {/* Feedback button */}
+                <a
+                    href={FEEDBACK_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    id="dashboard-feedback-btn"
+                    className="
+                        flex items-center gap-1.5
+                        h-8 px-2.5 sm:px-3 rounded-full
+                        text-xs font-semibold
+                        bg-primary/10 text-primary hover:bg-primary/20
+                        border border-primary/20 hover:border-primary/40
+                        transition-all duration-200
+                    "
+                    aria-label="Give feedback"
+                >
+                    <MessageEdit01Icon size={13} />
+                    <span className="hidden sm:inline">Feedback</span>
+                </a>
+
                 {/* Dark mode toggle */}
                 <ThemeToggle />
 
