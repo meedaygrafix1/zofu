@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Logout01Icon } from "hugeicons-react";
+import { Logout01Icon, MessageEdit01Icon } from "hugeicons-react";
 import Sidebar from "@/components/Sidebar";
 import FileUpload from "@/components/FileUpload";
 import JDInput from "@/components/JDInput";
@@ -273,9 +273,9 @@ export default function Home() {
                       <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                     </button>
 
-                    {/* Emoji / icon */}
-                    <div className="shrink-0 w-11 h-11 flex items-center justify-center rounded-xl bg-primary/15 text-xl">
-                      🎉
+                    {/* Icon */}
+                    <div className="shrink-0 w-11 h-11 flex items-center justify-center rounded-xl bg-primary/15">
+                      <MessageEdit01Icon size={20} className="text-primary" />
                     </div>
 
                     {/* Text */}
