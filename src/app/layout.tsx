@@ -22,9 +22,24 @@ export const metadata: Metadata = {
     description:
       "Amplify your resume for any job description. AI-powered ATS optimization, keyword matching, and interview preparation.",
     type: "website",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Zofu — AI Resume Optimizer",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Zofu — AI Resume Optimizer",
+    description:
+      "Amplify your resume for any job description. AI-powered ATS optimization, keyword matching, and interview preparation.",
+    images: ["/og-image.jpg"],
   },
   icons: {
-    icon: "/Favicon.png",
+    icon: "/favicon.png",
   },
 };
 
