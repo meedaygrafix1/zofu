@@ -7,6 +7,8 @@ import {
     File01Icon, File02Icon, PencilEdit01Icon, TickDouble01Icon,
 } from "hugeicons-react";
 import ReactMarkdown from 'react-markdown';
+import TemplatePickerModal from './TemplatePickerModal';
+import { type TemplateId, getTemplate } from '@/lib/resumeTemplates';
 
 interface Change {
     section: string;
@@ -51,25 +53,11 @@ export default function ResumePreview({
 }: ResumePreviewProps) {
     const [viewMode, setViewMode] = useState<"amplified" | "diff" | "original" | "coverLetter">("amplified");
     const [copied, setCopied] = useState(false);
-    const [showDownloadMenu, setShowDownloadMenu] = useState(false);
-    const [isDownloading, setIsDownloading] = useState<string | null>(null);
+    const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+    const [isDownloading, setIsDownloading] = useState<'pdf' | 'docx' | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [wordCount, setWordCount] = useState(0);
     const editorRef = useRef<HTMLDivElement>(null);
-    const downloadMenuRef = useRef<HTMLDivElement>(null);
-
-    // Close dropdown on click outside
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (downloadMenuRef.current && !downloadMenuRef.current.contains(event.target as Node)) {
-                setShowDownloadMenu(false);
-            }
-        }
-        if (showDownloadMenu) {
-            document.addEventListener("mousedown", handleClickOutside);
-            return () => document.removeEventListener("mousedown", handleClickOutside);
-        }
-    }, [showDownloadMenu]);
 
     // Sync editor content when amplifiedText changes externally (e.g. after new amplify run)
     useEffect(() => {
@@ -121,15 +109,16 @@ export default function ResumePreview({
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const downloadAsPDF = async () => {
+    const downloadAsPDF = async (templateId: TemplateId) => {
         setIsDownloading("pdf");
         try {
             const { default: jsPDF } = await import("jspdf");
             const doc = new jsPDF({ unit: "mm", format: "a4" });
+            const tmpl = getTemplate(templateId).pdf;
 
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
-            const margin = 15;
+            const margin = tmpl.margin;
             const usableWidth = pageWidth - margin * 2;
             const bottomMargin = 15;
 
@@ -256,9 +245,13 @@ export default function ResumePreview({
                 if (index === 0 || (index <= 2 && !isContactLine(rawLine) && !isSectionHeader(rawLine) && !isBullet(rawLine) && rawLine.trim().length < 50 && rawLines.slice(0, index).every(l => !l.trim()))) {
                     addPageIfNeeded(10);
                     doc.setFont("helvetica", "bold");
-                    doc.setFontSize(18);
-                    doc.setTextColor(26, 54, 93); // Dark navy
-                    doc.text(stripBold(trimmed), pageWidth / 2, cursorY, { align: "center" });
+                    doc.setFontSize(tmpl.nameSize);
+                    doc.setTextColor(...tmpl.nameRGB);
+                    if (tmpl.nameAlign === 'center') {
+                        doc.text(stripBold(trimmed), pageWidth / 2, cursorY, { align: "center" });
+                    } else {
+                        doc.text(stripBold(trimmed), margin, cursorY);
+                    }
                     doc.setTextColor(0, 0, 0);
                     cursorY += 8;
                     return;
@@ -267,12 +260,16 @@ export default function ResumePreview({
                 // Contact info line (email, phone, linkedin, etc.)
                 if (isContactLine(rawLine) && index <= 5) {
                     doc.setFont("helvetica", "normal");
-                    doc.setFontSize(8.5);
-                    doc.setTextColor(70, 70, 70);
+                    doc.setFontSize(tmpl.contactSize);
+                    doc.setTextColor(...tmpl.contactRGB);
                     const wrappedLines = doc.splitTextToSize(stripBold(trimmed), usableWidth) as string[];
                     for (const wl of wrappedLines) {
                         addPageIfNeeded(4.5);
-                        doc.text(wl, pageWidth / 2, cursorY, { align: "center" });
+                        if (tmpl.contactAlign === 'center') {
+                            doc.text(wl, pageWidth / 2, cursorY, { align: "center" });
+                        } else {
+                            doc.text(wl, margin, cursorY);
+                        }
                         cursorY += 4.5;
                     }
                     doc.setTextColor(0, 0, 0);
@@ -281,18 +278,26 @@ export default function ResumePreview({
 
                 // Section header (EXPERIENCE, EDUCATION, etc.)
                 if (isSectionHeader(rawLine)) {
-                    cursorY += 3.5; // extra space before section
+                    cursorY += tmpl.sectionSpaceBefore;
                     addPageIfNeeded(10);
                     doc.setFont("helvetica", "bold");
-                    doc.setFontSize(11);
-                    doc.setTextColor(26, 54, 93); // Dark navy
-                    doc.text(stripBold(trimmed).toUpperCase(), margin, cursorY);
+                    doc.setFontSize(tmpl.sectionSize);
+                    doc.setTextColor(...tmpl.sectionRGB);
+                    const sectionTextX = tmpl.dividerFull ? margin : margin + 5;
+                    if (!tmpl.dividerFull) {
+                        // Modern: draw left accent bar before text
+                        doc.setFillColor(...tmpl.dividerRGB);
+                        doc.rect(margin, cursorY - 3.5, 2.5, 4.5, 'F');
+                    }
+                    const headerText = tmpl.sectionUppercase ? stripBold(trimmed).toUpperCase() : stripBold(trimmed);
+                    doc.text(headerText, sectionTextX, cursorY);
                     doc.setTextColor(0, 0, 0);
                     cursorY += 1.2;
-                    // Draw a thin line under the header
-                    doc.setDrawColor(26, 54, 93);
-                    doc.setLineWidth(0.4);
-                    doc.line(margin, cursorY, pageWidth - margin, cursorY);
+                    if (tmpl.dividerFull) {
+                        doc.setDrawColor(...tmpl.dividerRGB);
+                        doc.setLineWidth(0.4);
+                        doc.line(margin, cursorY, pageWidth - margin, cursorY);
+                    }
                     cursorY += 4;
                     return;
                 }
@@ -302,16 +307,15 @@ export default function ResumePreview({
                     cursorY += 1.5;
                     addPageIfNeeded(7);
                     doc.setFont("helvetica", "bold");
-                    doc.setFontSize(10);
+                    doc.setFontSize(tmpl.subHeaderSize);
                     const { title, date } = extractDate(stripBold(trimmed));
                     if (date) {
-                        // Title left, date right
-                        printRichText(`**${title}**`, margin, usableWidth, 10);
+                        printRichText(`**${title}**`, margin, usableWidth, tmpl.subHeaderSize);
                         doc.setFont("helvetica", "normal");
                         doc.setFontSize(9.5);
                         doc.text(date, pageWidth - margin, cursorY, { align: "right" });
                     } else {
-                        printRichText(`**${stripBold(trimmed)}**`, margin, usableWidth, 10);
+                        printRichText(`**${stripBold(trimmed)}**`, margin, usableWidth, tmpl.subHeaderSize);
                     }
                     cursorY += 5;
                     return;
@@ -319,27 +323,23 @@ export default function ResumePreview({
 
                 // Bullet point
                 if (isBullet(rawLine)) {
-                    addPageIfNeeded(5);
+                    addPageIfNeeded(tmpl.lineHeight + 0.5);
                     const bulletIndent = 4;
                     const textIndent = bulletIndent + 3.5;
                     const bulletText = trimmed.replace(/^[•\-\*▪◦–■❖→✓⬥]\s*/, "");
 
                     doc.setFont("helvetica", "normal");
-                    doc.setFontSize(9.5);
-
-                    // Draw bullet
+                    doc.setFontSize(tmpl.bodySize);
                     doc.text("•", margin + bulletIndent, cursorY);
-
-                    // Render bullet text with bold support + wrapping
-                    printRichText(bulletText, margin + textIndent, usableWidth - textIndent, 9.5);
-                    cursorY += 4.5;
+                    printRichText(bulletText, margin + textIndent, usableWidth - textIndent, tmpl.bodySize);
+                    cursorY += tmpl.lineHeight;
                     return;
                 }
 
                 // Regular body text
-                addPageIfNeeded(4.5);
-                printRichText(trimmed, margin, usableWidth, 9.5);
-                cursorY += 4.5;
+                addPageIfNeeded(tmpl.lineHeight);
+                printRichText(trimmed, margin, usableWidth, tmpl.bodySize);
+                cursorY += tmpl.lineHeight;
             });
 
             doc.save("amplified-resume.pdf");
@@ -347,15 +347,15 @@ export default function ResumePreview({
             console.error("PDF generation failed:", err);
         } finally {
             setIsDownloading(null);
-            setShowDownloadMenu(false);
         }
     };
 
-    const downloadAsDOCX = async () => {
+    const downloadAsDOCX = async (templateId: TemplateId) => {
         setIsDownloading("docx");
         try {
             const { Document, Paragraph, TextRun, Packer, HeadingLevel, AlignmentType, BorderStyle, TabStopPosition, TabStopType } = await import("docx");
             const { saveAs } = await import("file-saver");
+            const tmpl = getTemplate(templateId).docx;
 
             const rawLines = cleanMarkdownForExport(textToDownload).split("\n");
 
@@ -423,9 +423,9 @@ export default function ResumePreview({
                 // Name (first line)
                 if (index === 0) {
                     paragraphs.push(new Paragraph({
-                        alignment: AlignmentType.CENTER,
+                        alignment: tmpl.nameCenter ? AlignmentType.CENTER : AlignmentType.LEFT,
                         spacing: { after: 20 },
-                        children: makeTextRuns(trimmed, "Calibri", 32, true, "1A365D"),
+                        children: makeTextRuns(trimmed, "Calibri", tmpl.nameFontSize, true, tmpl.nameColorHex),
                     }));
                     return;
                 }
@@ -433,20 +433,23 @@ export default function ResumePreview({
                 // Contact info
                 if (isContactLine(rawLine) && index <= 5) {
                     paragraphs.push(new Paragraph({
-                        alignment: AlignmentType.CENTER,
+                        alignment: tmpl.nameCenter ? AlignmentType.CENTER : AlignmentType.LEFT,
                         spacing: { after: 20 },
-                        children: makeTextRuns(trimmed, "Calibri", 18, false, "555555"),
+                        children: makeTextRuns(trimmed, "Calibri", tmpl.contactFontSize, false, tmpl.contactColorHex),
                     }));
                     return;
                 }
 
                 // Section header
                 if (isSectionHeader(rawLine)) {
+                    const sectionText = tmpl.sectionUppercase ? stripBoldDocx(trimmed).toUpperCase() : stripBoldDocx(trimmed);
                     paragraphs.push(new Paragraph({
                         heading: HeadingLevel.HEADING_2,
                         spacing: { before: 180, after: 60 },
-                        border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: "1A365D", space: 1 } },
-                        children: [new TextRun({ text: stripBoldDocx(trimmed).toUpperCase(), bold: true, font: "Calibri", size: 22, color: "1A365D" })],
+                        border: tmpl.hasSectionBorder
+                            ? { bottom: { style: BorderStyle.SINGLE, size: 2, color: tmpl.sectionBorderColorHex, space: 1 } }
+                            : {},
+                        children: [new TextRun({ text: sectionText, bold: true, font: "Calibri", size: tmpl.sectionFontSize, color: tmpl.sectionColorHex })],
                     }));
                     return;
                 }
@@ -456,11 +459,11 @@ export default function ResumePreview({
                     const { title, date } = extractDateDocx(stripBoldDocx(trimmed));
                     const children = date
                         ? [
-                            new TextRun({ text: title, bold: true, font: "Calibri", size: 21 }),
-                            new TextRun({ text: "\t", font: "Calibri", size: 21 }),
+                            new TextRun({ text: title, bold: true, font: "Calibri", size: tmpl.subHeaderFontSize }),
+                            new TextRun({ text: "\t", font: "Calibri", size: tmpl.subHeaderFontSize }),
                             new TextRun({ text: date, font: "Calibri", size: 19 }),
                         ]
-                        : makeTextRuns(trimmed, "Calibri", 21, true);
+                        : makeTextRuns(trimmed, "Calibri", tmpl.subHeaderFontSize, true);
                     paragraphs.push(new Paragraph({
                         spacing: { before: 80, after: 20 },
                         tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }],
@@ -475,7 +478,7 @@ export default function ResumePreview({
                     paragraphs.push(new Paragraph({
                         bullet: { level: 0 },
                         spacing: { after: 20 },
-                        children: makeTextRuns(bulletText, "Calibri", 21),
+                        children: makeTextRuns(bulletText, "Calibri", tmpl.bodyFontSize),
                     }));
                     return;
                 }
@@ -483,7 +486,7 @@ export default function ResumePreview({
                 // Regular text
                 paragraphs.push(new Paragraph({
                     spacing: { after: 20 },
-                    children: makeTextRuns(trimmed, "Calibri", 21),
+                    children: makeTextRuns(trimmed, "Calibri", tmpl.bodyFontSize),
                 }));
             });
 
@@ -491,7 +494,7 @@ export default function ResumePreview({
                 sections: [{
                     properties: {
                         page: {
-                            margin: { top: 720, bottom: 720, left: 720, right: 720 },
+                            margin: { top: tmpl.marginTwips, bottom: tmpl.marginTwips, left: tmpl.marginTwips, right: tmpl.marginTwips },
                         },
                     },
                     children: paragraphs,
@@ -504,7 +507,6 @@ export default function ResumePreview({
             console.error("DOCX generation failed:", err);
         } finally {
             setIsDownloading(null);
-            setShowDownloadMenu(false);
         }
     };
 
@@ -611,78 +613,20 @@ export default function ResumePreview({
                             <span className="hidden sm:inline">{copied ? "Copied!" : "Copy"}</span>
                         </motion.button>
 
-                        {/* Download Dropdown */}
-                        <div className="relative" ref={downloadMenuRef}>
-                            <motion.button
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => setShowDownloadMenu(!showDownloadMenu)}
-                                className="flex flex-1 sm:flex-none items-center justify-center gap-1.5 rounded-lg px-3 py-2 sm:py-1.5 text-sm sm:text-xs font-medium bg-primary text-white shadow-sm hover:bg-primary/90 transition-all"
-                            >
-                                <svg className="h-4 w-4 sm:h-3.5 sm:w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                    <polyline points="7 10 12 15 17 10" />
-                                    <line x1="12" y1="15" x2="12" y2="3" />
-                                </svg>
-                                Download
-                                <svg className={`h-3 w-3 transition-transform ${showDownloadMenu ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="6 9 12 15 18 9" />
-                                </svg>
-                            </motion.button>
-
-                            <AnimatePresence>
-                                {showDownloadMenu && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: -4, scale: 0.95 }}
-                                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        exit={{ opacity: 0, y: -4, scale: 0.95 }}
-                                        transition={{ duration: 0.15 }}
-                                        className="absolute right-0 top-full mt-2 w-52 bg-surface-elevated rounded-xl border border-border shadow-lg z-50 overflow-hidden"
-                                    >
-                                        <button
-                                            onClick={downloadAsPDF}
-                                            disabled={isDownloading !== null}
-                                            className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-surface-sunken transition-colors disabled:opacity-50"
-                                        >
-                                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-600">
-                                                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                                    <polyline points="14 2 14 8 20 8" />
-                                                    <line x1="16" y1="13" x2="8" y2="13" />
-                                                    <line x1="16" y1="17" x2="8" y2="17" />
-                                                    <polyline points="10 9 9 9 8 9" />
-                                                </svg>
-                                            </span>
-                                            <div className="text-left">
-                                                <div>{isDownloading === "pdf" ? "Generating..." : "Download as PDF"}</div>
-                                                <div className="text-[10px] text-muted font-normal">Best for printing</div>
-                                            </div>
-                                        </button>
-
-                                        <div className="border-t border-border/50" />
-
-                                        <button
-                                            onClick={downloadAsDOCX}
-                                            disabled={isDownloading !== null}
-                                            className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-surface-sunken transition-colors disabled:opacity-50"
-                                        >
-                                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                                                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                                    <polyline points="14 2 14 8 20 8" />
-                                                    <line x1="16" y1="13" x2="8" y2="13" />
-                                                    <line x1="16" y1="17" x2="8" y2="17" />
-                                                    <polyline points="10 9 9 9 8 9" />
-                                                </svg>
-                                            </span>
-                                            <div className="text-left">
-                                                <div>{isDownloading === "docx" ? "Generating..." : "Download as DOCX"}</div>
-                                                <div className="text-[10px] text-muted font-normal">Editable in Word / Docs</div>
-                                            </div>
-                                        </button>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
+                        {/* Download — opens template picker */}
+                        <motion.button
+                            id="resume-download-btn"
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setShowTemplatePicker(true)}
+                            className="flex flex-1 sm:flex-none items-center justify-center gap-1.5 rounded-lg px-3 py-2 sm:py-1.5 text-sm sm:text-xs font-medium bg-primary text-white shadow-sm hover:bg-primary/90 transition-all"
+                        >
+                            <svg className="h-4 w-4 sm:h-3.5 sm:w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            Download
+                        </motion.button>
                     </div>
                 )}
             </div>
@@ -873,6 +817,16 @@ export default function ResumePreview({
                     )}
                 </AnimatePresence>
             </div>
+
+            {/* Template Picker Modal */}
+            <TemplatePickerModal
+                isOpen={showTemplatePicker}
+                onClose={() => setShowTemplatePicker(false)}
+                onDownloadPDF={downloadAsPDF}
+                onDownloadDOCX={downloadAsDOCX}
+                resumeText={textToDownload}
+                isDownloading={isDownloading}
+            />
         </div>
     );
 }
