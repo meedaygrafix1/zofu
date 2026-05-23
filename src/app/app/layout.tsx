@@ -1,5 +1,6 @@
 import { OptimizerProvider } from "@/context/OptimizerContext";
 import { SidebarProvider } from "@/context/SidebarContext";
+import { NotificationProvider } from "@/context/NotificationContext";
 import DashboardTopNav from "@/components/DashboardTopNav";
 
 export default function AppLayout({
@@ -9,10 +10,12 @@ export default function AppLayout({
 }) {
     return (
         <SidebarProvider>
-            <OptimizerProvider>
-                <DashboardTopNav />
-                {children}
-            </OptimizerProvider>
+            <NotificationProvider>
+                <OptimizerProvider>
+                    <DashboardTopNav />
+                    {children}
+                </OptimizerProvider>
+            </NotificationProvider>
         </SidebarProvider>
     );
 }

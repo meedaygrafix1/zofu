@@ -4,53 +4,19 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useSidebar } from "@/context/SidebarContext";
+import { useNotifications } from "@/context/NotificationContext";
 import {
     Notification01Icon,
     SparklesIcon,
     CheckmarkCircle02Icon,
     InformationCircleIcon,
+    Alert01Icon,
     Cancel01Icon,
     Menu01Icon,
     MessageEdit01Icon,
 } from "hugeicons-react";
 
 const FEEDBACK_URL = "https://forms.gle/nf9daK7QV3Xyggw47";
-
-interface Notification {
-    id: string;
-    type: "info" | "success" | "update";
-    title: string;
-    body: string;
-    time: string;
-    read: boolean;
-}
-
-const INITIAL_NOTIFICATIONS: Notification[] = [
-    {
-        id: "n1",
-        type: "success",
-        title: "Resume Parsed Successfully",
-        body: "Your resume was extracted and is ready to use in the Optimizer.",
-        time: "Just now",
-        read: false,
-    },
-    {
-        id: "n2",
-        type: "update",
-        title: "AI Coach Upgraded",
-        body: "Upload PDF resumes directly into the AI Coach for instant analysis.",
-        time: "2 hours ago",
-        read: false,
-    },
-    {
-        id: "n3",
-        type: "info",
-        title: "Pro Plan Coming Soon",
-        body: "Unlimited optimizations, AI Cover Letters & more launching soon.",
-        time: "Yesterday",
-        read: true,
-    },
-];
 
 const TYPE_STYLES = {
     success: {
@@ -68,12 +34,17 @@ const TYPE_STYLES = {
         bg: "bg-muted/10",
         color: "text-muted",
     },
+    error: {
+        icon: Alert01Icon,
+        bg: "bg-destructive/10",
+        color: "text-destructive",
+    },
 };
 
 export default function DashboardTopNav() {
     const { open } = useSidebar();
+    const { notifications, markAllRead, dismissNotification, clearAll } = useNotifications();
     const [notifOpen, setNotifOpen] = useState(false);
-    const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
     const panelRef = useRef<HTMLDivElement>(null);
     const bellRef = useRef<HTMLButtonElement>(null);
 
@@ -95,13 +66,7 @@ export default function DashboardTopNav() {
         return () => document.removeEventListener("mousedown", handleClick);
     }, []);
 
-    const markAllRead = () => {
-        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    };
 
-    const dismissNotif = (id: string) => {
-        setNotifications((prev) => prev.filter((n) => n.id !== id));
-    };
 
     return (
         <header className="
@@ -265,7 +230,7 @@ export default function DashboardTopNav() {
 
                                                         {/* Dismiss */}
                                                         <button
-                                                            onClick={() => dismissNotif(notif.id)}
+                                                            onClick={() => dismissNotification(notif.id)}
                                                             className="
                                                                 opacity-0 group-hover:opacity-100 transition-opacity
                                                                 shrink-0 w-5 h-5 flex items-center justify-center
@@ -286,7 +251,7 @@ export default function DashboardTopNav() {
                                 {notifications.length > 0 && (
                                     <div className="px-4 py-2.5 border-t border-border">
                                         <button
-                                            onClick={() => setNotifications([])}
+                                            onClick={clearAll}
                                             className="text-xs text-muted hover:text-foreground transition-colors font-medium"
                                         >
                                             Clear all notifications

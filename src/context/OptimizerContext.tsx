@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import { useSessionHistory } from "@/hooks/useSessionHistory";
+import { useNotifications } from "@/context/NotificationContext";
 
 interface Keywords {
     found: string[];
@@ -70,6 +71,7 @@ interface OptimizerContextType {
 const OptimizerContext = createContext<OptimizerContextType | undefined>(undefined);
 
 export function OptimizerProvider({ children }: { children: ReactNode }) {
+    const { addNotification } = useNotifications();
     const [resumeText, setResumeText] = useState("");
     const [resumeFileName, setResumeFileName] = useState("");
     const [jobDescription, setJobDescription] = useState("");
@@ -144,7 +146,15 @@ export function OptimizerProvider({ children }: { children: ReactNode }) {
         (text: string, fileName: string) => {
             setResumeText(text);
             setResumeFileName(fileName);
-            if (!text) {
+            if (text) {
+                addNotification({
+                    type: "success",
+                    title: "Resume Uploaded",
+                    body: fileName
+                        ? `"${fileName}" was parsed and is ready to optimize.`
+                        : "Your resume was parsed and is ready to optimize.",
+                });
+            } else {
                 setCoverLetter("");
                 setAmplifiedText("");
                 setAtsScore(null);
@@ -154,7 +164,7 @@ export function OptimizerProvider({ children }: { children: ReactNode }) {
                 setTechnicalQuestions([]);
             }
         },
-        []
+        [addNotification]
     );
 
     const handleAmplify = async () => {
@@ -176,19 +186,31 @@ export function OptimizerProvider({ children }: { children: ReactNode }) {
                 throw new Error(data.message || data.error || "Amplification failed");
             }
 
+            const amplifiedResume = data.amplifiedResume || "";
+            const atsScore = data.atsScore ?? null;
+
             setCoverLetter(data.coverLetter || "");
-            setAmplifiedText(data.amplifiedResume || "");
-            setAtsScore(data.atsScore ?? null);
+            setAmplifiedText(amplifiedResume);
+            setAtsScore(atsScore);
             setKeywords(data.keywords || null);
             setChanges(data.changes || []);
+
+            // Fire a real success notification
+            addNotification({
+                type: "success",
+                title: "Resume Amplified! 🎉",
+                body: atsScore !== null
+                    ? `Your ATS score is ${atsScore}%. Resume is ready to download.`
+                    : "Your optimized resume is ready to download.",
+            });
 
             const newSessionId = await saveSession({
                 resumeText,
                 resumeFileName,
                 jobDescription,
                 coverLetter: data.coverLetter || "",
-                amplifiedText: data.amplifiedResume || "",
-                atsScore: data.atsScore ?? null,
+                amplifiedText: amplifiedResume,
+                atsScore,
                 keywords: data.keywords || null,
                 changes: data.changes || [],
             });
@@ -201,7 +223,13 @@ export function OptimizerProvider({ children }: { children: ReactNode }) {
             }
 
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Something went wrong");
+            const message = err instanceof Error ? err.message : "Something went wrong";
+            setError(message);
+            addNotification({
+                type: "error",
+                title: "Amplification Failed",
+                body: message,
+            });
         } finally {
             setIsAmplifying(false);
         }
@@ -225,12 +253,26 @@ export function OptimizerProvider({ children }: { children: ReactNode }) {
                 throw new Error(data.message || data.error || "Failed to generate");
             }
 
-            setBehavioralQuestions(data.behavioral || []);
-            setTechnicalQuestions(data.technical || []);
+            const behavioral = data.behavioral || [];
+            const technical = data.technical || [];
+            setBehavioralQuestions(behavioral);
+            setTechnicalQuestions(technical);
+            const total = behavioral.length + technical.length;
+            if (total > 0) {
+                addNotification({
+                    type: "update",
+                    title: "Interview Questions Ready",
+                    body: `${total} tailored questions generated — ${behavioral.length} behavioural, ${technical.length} technical.`,
+                });
+            }
         } catch (err) {
-            setError(
-                err instanceof Error ? err.message : "Failed to generate questions"
-            );
+            const message = err instanceof Error ? err.message : "Failed to generate questions";
+            setError(message);
+            addNotification({
+                type: "error",
+                title: "Interview Prep Failed",
+                body: message,
+            });
         } finally {
             setIsGeneratingQuestions(false);
         }
