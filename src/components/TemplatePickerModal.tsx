@@ -314,7 +314,8 @@ function TemplateCard({
 }) {
     const Thumb = TEMPLATE_THUMBS[template.id];
     return (
-        <button
+        <motion.button
+            whileTap={{ scale: 0.97 }}
             onClick={onSelect}
             className={`
                 relative w-full text-left rounded-xl border-2 transition-all duration-200 overflow-hidden
@@ -364,7 +365,7 @@ function TemplateCard({
                     </motion.div>
                 )}
             </AnimatePresence>
-        </button>
+        </motion.button>
     );
 }
 
@@ -393,11 +394,43 @@ export default function TemplatePickerModal({
         return 'classic';
     });
 
+    const [activeTab, setActiveTab] = useState<'style' | 'preview'>('style');
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [containerWidth, setContainerWidth] = useState(0);
+
+    // Reset activeTab to 'style' when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            setActiveTab('style');
+        }
+    }, [isOpen]);
+
+    // Measure container width for dynamic fluid scaling of preview
+    useEffect(() => {
+        if (!containerRef.current) return;
+        
+        // Initial measurement
+        setContainerWidth(containerRef.current.clientWidth);
+
+        const resizeObserver = new ResizeObserver((entries) => {
+            for (let entry of entries) {
+                setContainerWidth(entry.contentRect.width);
+            }
+        });
+        
+        resizeObserver.observe(containerRef.current);
+        return () => resizeObserver.disconnect();
+    }, [isOpen, activeTab]);
+
     const handleSelect = (id: TemplateId) => {
         setSelectedId(id);
         if (typeof window !== 'undefined') {
             localStorage.setItem('zofu-resume-template', id);
         }
+        // Auto-switch to preview tab on mobile with a short delay to let checkmark animate
+        setTimeout(() => {
+            setActiveTab('preview');
+        }, 350);
     };
 
     // Close on Escape
@@ -455,11 +488,65 @@ export default function TemplatePickerModal({
                             </button>
                         </div>
 
+                        {/* ── Mobile Tab Switcher ── */}
+                        <div className="flex md:hidden border-b border-border bg-surface-sunken/45 p-1.5 gap-1.5 flex-shrink-0">
+                            <button
+                                onClick={() => setActiveTab('style')}
+                                className={`flex-1 py-2.5 text-xs font-semibold rounded-xl transition-all relative flex items-center justify-center gap-1.5 ${
+                                    activeTab === 'style' ? 'text-foreground font-bold' : 'text-muted hover:text-foreground'
+                                }`}
+                            >
+                                {activeTab === 'style' && (
+                                    <motion.div
+                                        layoutId="active-mobile-tab"
+                                        className="absolute inset-0 bg-background rounded-xl shadow-sm border border-border/40"
+                                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                                    />
+                                )}
+                                <span className="relative z-10 flex items-center gap-1.5">
+                                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <rect width="18" height="18" x="3" y="3" rx="2" />
+                                        <path d="M3 9h18" />
+                                        <path d="M9 21V9" />
+                                    </svg>
+                                    Choose Style
+                                </span>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('preview')}
+                                className={`flex-1 py-2.5 text-xs font-semibold rounded-xl transition-all relative flex items-center justify-center gap-1.5 ${
+                                    activeTab === 'preview' ? 'text-foreground font-bold' : 'text-muted hover:text-foreground'
+                                }`}
+                            >
+                                {activeTab === 'preview' && (
+                                    <motion.div
+                                        layoutId="active-mobile-tab"
+                                        className="absolute inset-0 bg-background rounded-xl shadow-sm border border-border/40"
+                                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                                    />
+                                )}
+                                <span className="relative z-10 flex items-center gap-1.5">
+                                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                    Live Preview
+                                    <span
+                                        className="w-1.5 h-1.5 rounded-full"
+                                        style={{ background: selectedTemplate.accentHex }}
+                                    />
+                                </span>
+                            </button>
+                        </div>
+
                         {/* ── Body ── */}
                         <div className="flex flex-col md:flex-row flex-1 overflow-hidden min-h-0">
 
                             {/* Left: Template card grid */}
-                            <div className="md:w-[296px] flex-shrink-0 border-b md:border-b-0 md:border-r border-border overflow-y-auto">
+                            <div className={`
+                                ${activeTab === 'style' ? 'block' : 'hidden'}
+                                md:block md:w-[296px] flex-shrink-0 border-b md:border-b-0 md:border-r border-border overflow-y-auto flex-1 md:flex-none
+                            `}>
                                 <div className="p-4">
                                     <p className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-3">
                                         4 ATS-Friendly Styles
@@ -482,7 +569,10 @@ export default function TemplatePickerModal({
                             </div>
 
                             {/* Right: Live preview */}
-                            <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+                            <div className={`
+                                ${activeTab === 'preview' ? 'flex' : 'hidden'}
+                                md:flex flex-1 overflow-hidden flex-col min-h-0
+                            `}>
                                 {/* Preview bar */}
                                 <div className="flex items-center gap-2 px-5 py-3 border-b border-border flex-shrink-0 bg-surface-sunken/50">
                                     <div
@@ -495,7 +585,10 @@ export default function TemplatePickerModal({
                                 </div>
 
                                 {/* Preview content */}
-                                <div className="flex-1 overflow-y-auto bg-gray-100 dark:bg-gray-900 p-5">
+                                <div 
+                                    ref={containerRef} 
+                                    className="flex-1 overflow-y-auto bg-gray-100 dark:bg-gray-900 p-3 sm:p-5 flex items-start justify-center min-h-0"
+                                >
                                     {resumeText ? (
                                         <AnimatePresence mode="wait">
                                             <motion.div
@@ -504,8 +597,13 @@ export default function TemplatePickerModal({
                                                 animate={{ opacity: 1, y: 0 }}
                                                 exit={{ opacity: 0 }}
                                                 transition={{ duration: 0.2 }}
-                                                className="max-w-[680px] mx-auto shadow-xl rounded-sm overflow-hidden"
-                                                style={{ fontSize: '10px', zoom: 0.88 }}
+                                                className="shadow-xl rounded-sm overflow-hidden bg-white flex-shrink-0"
+                                                style={{ 
+                                                    width: '680px',
+                                                    zoom: containerWidth && containerWidth < 680 
+                                                        ? Math.max(0.4, (containerWidth - 24) / 680) 
+                                                        : 0.88,
+                                                }}
                                             >
                                                 <LiveResumePreview text={resumeText} template={selectedTemplate} />
                                             </motion.div>
@@ -538,7 +636,7 @@ export default function TemplatePickerModal({
                                     id="template-picker-download-docx"
                                     onClick={() => onDownloadDOCX(selectedId)}
                                     disabled={isDownloading !== null}
-                                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 h-10 px-4 rounded-xl border border-border bg-surface-elevated text-sm font-semibold text-foreground hover:bg-surface-sunken transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 h-10 px-4 rounded-xl border border-border bg-surface-elevated text-sm font-semibold text-foreground hover:bg-surface-sunken transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                                 >
                                     {isDownloading === 'docx' ? (
                                         <svg className="w-4 h-4 animate-spin text-primary" viewBox="0 0 24 24" fill="none">
