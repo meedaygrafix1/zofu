@@ -13,6 +13,7 @@ export interface SessionData {
     coverLetter: string;
     amplifiedText: string;
     atsScore: number | null;
+    originalAtsScore: number | null; // baseline score before optimisation
     keywords: {
         found: string[];
         missing: string[];
@@ -54,6 +55,7 @@ function toRow(session: SessionData, userId: string) {
         cover_letter: session.coverLetter,
         amplified_text: session.amplifiedText,
         ats_score: session.atsScore,
+        original_ats_score: session.originalAtsScore ?? null,
         keywords: session.keywords,
         changes: session.changes,
     };
@@ -71,6 +73,7 @@ function fromRow(row: Record<string, unknown>): SessionData {
         coverLetter: (row.cover_letter as string) || "",
         amplifiedText: row.amplified_text as string,
         atsScore: (row.ats_score as number) ?? null,
+        originalAtsScore: (row.original_ats_score as number) ?? null,
         keywords: (row.keywords as SessionData["keywords"]) ?? null,
         changes: (row.changes as SessionData["changes"]) ?? [],
     };
