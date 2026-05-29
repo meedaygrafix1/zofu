@@ -42,7 +42,7 @@ export default function Home() {
   const {
     resumeText, setJobDescription, jobDescription,
     isAmplifying, isGeneratingQuestions, error,
-    amplifiedText, setAmplifiedText, coverLetter, atsScore, setAtsScore, keywords, setKeywords, changes, setChanges,
+    amplifiedText, setAmplifiedText, coverLetter, atsScore, setAtsScore, originalAtsScore, keywords, setKeywords, changes, setChanges,
     behavioralQuestions, technicalQuestions,
     hasResume, hasJD, canAmplify, hasResults, currentStep,
     resetAll, handleFileProcessed, handleAmplify, handleGenerateQuestions,
@@ -205,7 +205,7 @@ export default function Home() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 }}
                   >
-                    <ATSScoreCard score={atsScore} isLoading={isAmplifying} />
+                    <ATSScoreCard score={atsScore} originalScore={originalAtsScore} isLoading={isAmplifying} />
                   </motion.div>
 
                   <motion.div

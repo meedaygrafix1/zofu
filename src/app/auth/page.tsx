@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ArrowLeft01Icon, Mail01Icon, LockKeyIcon, SentIcon, ViewIcon, ViewOffSlashIcon } from "hugeicons-react";
 import { createClient } from "@/utils/supabase/client";
 import Logo from "@/components/Logo";
+import LoginButton from "@/components/LoginButton";
 
 type AuthView = "signIn" | "signUp" | "forgotPassword" | "resetSent";
 
@@ -330,7 +331,17 @@ function AuthPageContent() {
                                     </p>
                                 </div>
 
-                                <form onSubmit={handleSubmit} className="space-y-5 mt-8">
+                                {/* ── Google OAuth ── */}
+                                <div className="mt-8 space-y-4">
+                                    <LoginButton />
+                                    <div className="relative flex items-center gap-3">
+                                        <div className="h-px flex-1 bg-border" />
+                                        <span className="text-xs font-medium text-muted">or continue with email</span>
+                                        <div className="h-px flex-1 bg-border" />
+                                    </div>
+                                </div>
+
+                                <form onSubmit={handleSubmit} className="space-y-5 mt-4">
                                     <AnimatePresence mode="wait">
                                         {isSignUp && (
                                             <motion.div

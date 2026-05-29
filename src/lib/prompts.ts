@@ -19,14 +19,17 @@ export const AMPLIFY_PROMPT = `Analyze the following resume and job description.
 
 ## Instructions:
 1. Identify the top keywords and requirements from the JD (both "must-have" and "nice-to-have").
-2. Rewrite the Professional Summary to directly address the role requirements.
-3. Rewrite Experience bullet points to mirror JD language and quantify achievements.
-4. Ensure the top keywords from the JD are naturally woven into the content.
-5. Suggest any missing skills that should be added to a Skills section.
-6. Draft a compelling, personalized cover letter based on the resume and job description. Keep it concise (3-4 paragraphs), highlight the most relevant achievements, and use an engaging professional tone.
+2. Score the ORIGINAL (unmodified) resume against the JD on a 0-100 ATS scale — this is the baseline score before any changes.
+3. Rewrite the Professional Summary to directly address the role requirements.
+4. Rewrite Experience bullet points to mirror JD language and quantify achievements.
+5. Ensure the top keywords from the JD are naturally woven into the content.
+6. Suggest any missing skills that should be added to a Skills section.
+7. Draft a compelling, personalized cover letter based on the resume and job description. Keep it concise (3-4 paragraphs), highlight the most relevant achievements, and use an engaging professional tone.
 
 ## Required Output Format (JSON):
 {
+  "coverLetter": "The full drafted cover letter text (3-4 paragraphs, professional tone, tailored to the role).",
+  "originalAtsScore": 52,
   "amplifiedResume": "The full rewritten resume text with clear sections, formatted in markdown. MUST BE PLAIN TEXT/MARKDOWN, NOT A NESTED JSON OBJECT.",
   "atsScore": 85,
   "keywords": {
@@ -42,8 +45,7 @@ export const AMPLIFY_PROMPT = `Analyze the following resume and job description.
       "reason": "Why this change was made"
     }
   ],
-  "summary": "Brief explanation of what was changed and why",
-  "coverLetter": "The drafted cover letter text"
+  "summary": "Brief explanation of what was changed and why"
 }
 
 Return ONLY valid JSON, no markdown fences or extra text.`;

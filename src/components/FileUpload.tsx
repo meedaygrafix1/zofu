@@ -105,12 +105,15 @@ export default function FileUpload({
                         exit={{ opacity: 0, scale: 0.95 }}
                         className="flex items-center justify-between rounded-xl border border-success/30 bg-success-light/50 p-4"
                     >
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10">
+                        <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-success/10">
                                 <CheckmarkCircle01Icon className="h-5 w-5 text-success" />
                             </div>
-                            <div>
-                                <p className="text-sm font-medium text-foreground">
+                            <div className="min-w-0">
+                                <p
+                                    className="text-sm font-medium text-foreground truncate max-w-[160px]"
+                                    title={fileName ?? undefined}
+                                >
                                     {fileName}
                                 </p>
                                 <p className="text-xs text-muted">Successfully parsed</p>

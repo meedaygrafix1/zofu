@@ -88,6 +88,7 @@ async function withRetry<T>(
 export interface AmplifyResult {
     amplifiedResume: string;
     atsScore: number;
+    originalAtsScore: number; // ATS score of the original resume before optimization
     keywords: {
         found: string[];
         missing: string[];
@@ -124,7 +125,7 @@ export async function amplifyResume(
         systemInstruction: SYSTEM_PROMPT,
         generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 8192,
+            maxOutputTokens: 16384, // Increased: cover letter + full resume needs more headroom
             responseMimeType: "application/json",
         },
     });

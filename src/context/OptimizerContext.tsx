@@ -43,6 +43,8 @@ interface OptimizerContextType {
     setAmplifiedText: (text: string) => void;
     atsScore: number | null;
     setAtsScore: (score: number | null) => void;
+    originalAtsScore: number | null;
+    setOriginalAtsScore: (score: number | null) => void;
     keywords: Keywords | null;
     setKeywords: (k: Keywords | null) => void;
     changes: Change[];
@@ -83,6 +85,7 @@ export function OptimizerProvider({ children }: { children: ReactNode }) {
 
     const [amplifiedText, setAmplifiedText] = useState("");
     const [atsScore, setAtsScore] = useState<number | null>(null);
+    const [originalAtsScore, setOriginalAtsScore] = useState<number | null>(null);
     const [keywords, setKeywords] = useState<Keywords | null>(null);
     const [changes, setChanges] = useState<Change[]>([]);
     const [behavioralQuestions, setBehavioralQuestions] = useState<InterviewQuestion[]>([]);
@@ -110,6 +113,7 @@ export function OptimizerProvider({ children }: { children: ReactNode }) {
         setCoverLetter("");
         setAmplifiedText("");
         setAtsScore(null);
+        setOriginalAtsScore(null);
         setKeywords(null);
         setChanges([]);
         setBehavioralQuestions([]);
@@ -132,6 +136,7 @@ export function OptimizerProvider({ children }: { children: ReactNode }) {
                 setCoverLetter(session.coverLetter || "");
                 setAmplifiedText(session.amplifiedText);
                 setAtsScore(session.atsScore);
+                setOriginalAtsScore(session.originalAtsScore ?? null);
                 setKeywords(session.keywords);
                 setChanges(session.changes);
                 setBehavioralQuestions([]);
@@ -192,6 +197,7 @@ export function OptimizerProvider({ children }: { children: ReactNode }) {
             setCoverLetter(data.coverLetter || "");
             setAmplifiedText(amplifiedResume);
             setAtsScore(atsScore);
+            setOriginalAtsScore(data.originalAtsScore ?? null);
             setKeywords(data.keywords || null);
             setChanges(data.changes || []);
 
@@ -211,6 +217,7 @@ export function OptimizerProvider({ children }: { children: ReactNode }) {
                 coverLetter: data.coverLetter || "",
                 amplifiedText: amplifiedResume,
                 atsScore,
+                originalAtsScore: data.originalAtsScore ?? null,
                 keywords: data.keywords || null,
                 changes: data.changes || [],
             });
@@ -288,6 +295,7 @@ export function OptimizerProvider({ children }: { children: ReactNode }) {
             error, setError,
             amplifiedText, setAmplifiedText,
             atsScore, setAtsScore,
+            originalAtsScore, setOriginalAtsScore,
             keywords, setKeywords,
             changes, setChanges,
             behavioralQuestions, technicalQuestions,
