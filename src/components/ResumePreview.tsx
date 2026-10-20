@@ -9,6 +9,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import TemplatePickerModal from './TemplatePickerModal';
 import { type TemplateId, getTemplate } from '@/lib/resumeTemplates';
+import { createResumeLink, normalizeResumeUrl, parseResumeInline } from '@/lib/resumeLinks';
 
 interface Change {
     section: string;
@@ -58,6 +59,11 @@ export default function ResumePreview({
     const [isEditing, setIsEditing] = useState(false);
     const [wordCount, setWordCount] = useState(0);
     const editorRef = useRef<HTMLDivElement>(null);
+    const linkRangeRef = useRef<Range | null>(null);
+    const [showLinkForm, setShowLinkForm] = useState(false);
+    const [linkLabel, setLinkLabel] = useState("");
+    const [linkUrl, setLinkUrl] = useState("");
+    const [linkError, setLinkError] = useState("");
 
     // Sync editor content when amplifiedText changes externally (e.g. after new amplify run)
     useEffect(() => {
@@ -97,7 +103,56 @@ export default function ResumePreview({
     };
 
     const exitEditMode = () => {
+        handleEditorInput();
+        setShowLinkForm(false);
         setIsEditing(false);
+    };
+
+    const openLinkForm = () => {
+        const editor = editorRef.current;
+        if (!editor) return;
+        const selection = window.getSelection();
+        const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
+        if (range && editor.contains(range.commonAncestorContainer)) {
+            linkRangeRef.current = range.cloneRange();
+            setLinkLabel(range.toString().replace(/[\r\n]+/g, " "));
+        } else {
+            const fallback = document.createRange();
+            fallback.selectNodeContents(editor);
+            fallback.collapse(false);
+            linkRangeRef.current = fallback;
+            setLinkLabel("");
+        }
+        setLinkUrl("");
+        setLinkError("");
+        setShowLinkForm(true);
+    };
+
+    const insertLink = (event: React.FormEvent) => {
+        event.preventDefault();
+        const url = normalizeResumeUrl(linkUrl);
+        if (!linkLabel.trim() || /[\r\n]/.test(linkLabel)) {
+            setLinkError("Enter a label such as Portfolio or LinkedIn.");
+            return;
+        }
+        if (!url) {
+            setLinkError("Enter a valid website URL, such as https://example.com.");
+            return;
+        }
+        const editor = editorRef.current;
+        const range = linkRangeRef.current;
+        if (!editor || !range || !editor.contains(range.commonAncestorContainer)) {
+            setLinkError("Select a place in your resume, then open Link again.");
+            return;
+        }
+        editor.focus();
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        document.execCommand("insertText", false, createResumeLink(linkLabel, url));
+        handleEditorInput();
+        setShowLinkForm(false);
+        linkRangeRef.current = null;
     };
 
     const textToCopy = viewMode === "coverLetter" ? coverLetter || "" : amplifiedText;
@@ -122,60 +177,41 @@ export default function ResumePreview({
             const usableWidth = pageWidth - margin * 2;
             const bottomMargin = 15;
 
-            // Parse markdown bold: splits text into segments of {text, bold}
-            const parseBoldSegments = (text: string) => {
-                const segments: { text: string; bold: boolean }[] = [];
-                const regex = /\*\*(.+?)\*\*/g;
-                let lastIndex = 0;
-                let match;
-                while ((match = regex.exec(text)) !== null) {
-                    if (match.index > lastIndex) {
-                        segments.push({ text: text.slice(lastIndex, match.index), bold: false });
-                    }
-                    segments.push({ text: match[1], bold: true });
-                    lastIndex = regex.lastIndex;
-                }
-                if (lastIndex < text.length) {
-                    segments.push({ text: text.slice(lastIndex), bold: false });
-                }
-                return segments.length > 0 ? segments : [{ text, bold: false }];
-            };
-
-            // Render text that wraps naturally and respects bold markers
-            const printRichText = (text: string, startX: number, maxWidth: number, fontSize: number, baseLineHeight = 4.5, alignRight: boolean = false) => {
+            // Wrap visible labels while preserving bold text and PDF link annotations.
+            const printRichText = (text: string, startX: number, maxWidth: number, fontSize: number, baseLineHeight = 4.5, alignment: "left" | "center" = "left") => {
                 doc.setFontSize(fontSize);
-                let currentX = startX;
-
-                if (alignRight) {
-                    doc.setFont("helvetica", "normal");
-                    doc.text(stripBold(text), startX, cursorY, { align: "right" });
-                    return;
-                }
-
-                const segments = parseBoldSegments(text);
-                for (let i = 0; i < segments.length; i++) {
-                    const seg = segments[i];
+                let lineWidth = 0;
+                let line: { text: string; bold: boolean; url?: string; width: number }[] = [];
+                const flushLine = () => {
+                    addPageIfNeeded(baseLineHeight);
+                    let x = startX + (alignment === "center" ? (maxWidth - lineWidth) / 2 : 0);
+                    for (const token of line) {
+                        doc.setFont("helvetica", token.bold ? "bold" : "normal");
+                        doc.text(token.text, x, cursorY);
+                        if (token.url) {
+                            doc.link(x, cursorY - fontSize * 0.3528, token.width, baseLineHeight, { url: token.url });
+                        }
+                        x += token.width;
+                    }
+                    line = [];
+                    lineWidth = 0;
+                };
+                for (const seg of parseResumeInline(text)) {
                     doc.setFont("helvetica", seg.bold ? "bold" : "normal");
-
-                    const tokens = seg.text.split(/(\s+)/);
-                    for (const token of tokens) {
+                    for (const token of seg.text.split(/(\s+)/)) {
                         if (!token) continue;
-                        const tokenWidth = doc.getTextWidth(token);
-
-                        if (currentX + tokenWidth > startX + maxWidth && currentX > startX && !token.match(/^\s+$/)) {
+                        doc.setFont("helvetica", seg.bold ? "bold" : "normal");
+                        const width = doc.getTextWidth(token);
+                        if (lineWidth + width > maxWidth && line.length && !/^\s+$/.test(token)) {
+                            flushLine();
                             cursorY += baseLineHeight;
-                            addPageIfNeeded(baseLineHeight);
-                            currentX = startX;
                         }
-
-                        if (currentX === startX && token.match(/^\s+$/)) {
-                            continue; // omit leading spaces wrapped to a new line
-                        }
-
-                        doc.text(token, currentX, cursorY);
-                        currentX += tokenWidth;
+                        if (!line.length && /^\s+$/.test(token)) continue;
+                        line.push({ ...seg, text: token, width });
+                        lineWidth += width;
                     }
                 }
+                flushLine();
             };
 
             // Strip bold markers for width calculation / heuristic matching
@@ -198,7 +234,7 @@ export default function ResumePreview({
             const isContactLine = (line: string) => {
                 const trimmed = line.trim();
                 // Contains email, phone, URL, or pipe-separated contact info
-                return /[@]/.test(trimmed) || /\b\d{3}[\s\-.)]{0,2}\d{3}[\s\-.)]{0,2}\d{4}\b/.test(trimmed) ||
+                return parseResumeInline(trimmed).some(segment => segment.url) || /[@]/.test(trimmed) || /\b\d{3}[\s\-.)]{0,2}\d{3}[\s\-.)]{0,2}\d{4}\b/.test(trimmed) ||
                     /\b(linkedin|github|portfolio|www\.)\b/i.test(trimmed) ||
                     (/[|•·,]/.test(trimmed) && trimmed.length < 120 && /@/.test(trimmed));
             };
@@ -262,16 +298,8 @@ export default function ResumePreview({
                     doc.setFont("helvetica", "normal");
                     doc.setFontSize(tmpl.contactSize);
                     doc.setTextColor(...tmpl.contactRGB);
-                    const wrappedLines = doc.splitTextToSize(stripBold(trimmed), usableWidth) as string[];
-                    for (const wl of wrappedLines) {
-                        addPageIfNeeded(4.5);
-                        if (tmpl.contactAlign === 'center') {
-                            doc.text(wl, pageWidth / 2, cursorY, { align: "center" });
-                        } else {
-                            doc.text(wl, margin, cursorY);
-                        }
-                        cursorY += 4.5;
-                    }
+                    printRichText(trimmed, margin, usableWidth, tmpl.contactSize, 4.5, tmpl.contactAlign);
+                    cursorY += 4.5;
                     doc.setTextColor(0, 0, 0);
                     return;
                 }
@@ -353,7 +381,7 @@ export default function ResumePreview({
     const downloadAsDOCX = async (templateId: TemplateId) => {
         setIsDownloading("docx");
         try {
-            const { Document, Paragraph, TextRun, Packer, HeadingLevel, AlignmentType, BorderStyle, TabStopPosition, TabStopType } = await import("docx");
+            const { Document, Paragraph, TextRun, ExternalHyperlink, Packer, HeadingLevel, AlignmentType, BorderStyle, TabStopPosition, TabStopType } = await import("docx");
             const { saveAs } = await import("file-saver");
             const tmpl = getTemplate(templateId).docx;
 
@@ -371,7 +399,7 @@ export default function ResumePreview({
             const isBullet = (line: string) => /^\s*[•\-\*▪◦–■❖→✓⬥]\s/.test(line);
             const isContactLine = (line: string) => {
                 const t = line.trim();
-                return /[@]/.test(t) || /\b\d{3}[\s\-.)]{0,2}\d{3}[\s\-.)]{0,2}\d{4}\b/.test(t) ||
+                return parseResumeInline(t).some(segment => segment.url) || /[@]/.test(t) || /\b\d{3}[\s\-.)]{0,2}\d{3}[\s\-.)]{0,2}\d{4}\b/.test(t) ||
                     /\b(linkedin|github|portfolio|www\.)\b/i.test(t);
             };
             const isSubHeaderDocx = (line: string) => {
@@ -393,21 +421,17 @@ export default function ResumePreview({
 
             // Parse markdown bold into TextRun array for DOCX
             const makeTextRuns = (text: string, baseFont: string = "Calibri", baseSize: number = 21, baseBold: boolean = false, color?: string) => {
-                const runs: InstanceType<typeof TextRun>[] = [];
-                const regex = /\*\*(.+?)\*\*/g;
-                let lastIndex = 0;
-                let match;
-                while ((match = regex.exec(text)) !== null) {
-                    if (match.index > lastIndex) {
-                        runs.push(new TextRun({ text: text.slice(lastIndex, match.index), font: baseFont, size: baseSize, bold: baseBold, ...(color ? { color } : {}) }));
-                    }
-                    runs.push(new TextRun({ text: match[1], font: baseFont, size: baseSize, bold: true, ...(color ? { color } : {}) }));
-                    lastIndex = regex.lastIndex;
-                }
-                if (lastIndex < text.length) {
-                    runs.push(new TextRun({ text: text.slice(lastIndex), font: baseFont, size: baseSize, bold: baseBold, ...(color ? { color } : {}) }));
-                }
-                return runs.length > 0 ? runs : [new TextRun({ text, font: baseFont, size: baseSize, bold: baseBold, ...(color ? { color } : {}) })];
+                return parseResumeInline(text).map(segment => {
+                    const run = new TextRun({
+                        text: segment.text, font: baseFont, size: baseSize,
+                        bold: baseBold || segment.bold,
+                        ...(color ? { color } : {}),
+                        ...(segment.url ? { underline: {} } : {}),
+                    });
+                    return segment.url
+                        ? new ExternalHyperlink({ link: segment.url, children: [run] })
+                        : run;
+                });
             };
 
             const paragraphs: InstanceType<typeof Paragraph>[] = [];
@@ -564,7 +588,7 @@ export default function ResumePreview({
                         ].map(({ id, label, icon: Icon }) => (
                             <button
                                 key={id}
-                                onClick={() => { setViewMode(id); if (id !== "amplified") setIsEditing(false); }}
+                                onClick={() => { setViewMode(id); if (id !== "amplified") exitEditMode(); }}
                                 className={`
                                     flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all snap-center whitespace-nowrap
                                     ${viewMode === id
@@ -659,6 +683,20 @@ export default function ResumePreview({
 
                         <div className="w-px h-5 bg-border mx-1" />
 
+                        <button
+                            type="button"
+                            onMouseDown={event => event.preventDefault()}
+                            onClick={openLinkForm}
+                            aria-expanded={showLinkForm}
+                            aria-controls="resume-link-form"
+                            className="flex items-center justify-center gap-1 px-2 h-7 rounded-md hover:bg-border text-xs text-foreground transition-colors"
+                            title="Add a link to selected text or at the cursor"
+                        >
+                            Link
+                        </button>
+
+                        <div className="w-px h-5 bg-border mx-1" />
+
                         {/* Bullet list */}
                         <button onMouseDown={e => { e.preventDefault(); execCmd("insertUnorderedList"); }}
                             className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-border text-foreground transition-colors" title="Bullet list">
@@ -698,6 +736,31 @@ export default function ResumePreview({
                 )}
             </AnimatePresence>
 
+            {isEditing && showLinkForm && (
+                <form id="resume-link-form" onSubmit={insertLink} className="border-b border-border bg-surface-sunken px-4 py-3 space-y-3">
+                    <p className="text-xs text-muted">Select text or place your cursor in the resume header, then add a portfolio, LinkedIn, or other website link.</p>
+                    <div className="flex flex-wrap gap-3 items-end">
+                        <label className="flex-1 min-w-[160px] text-xs text-foreground">
+                            Link text
+                            <input autoFocus value={linkLabel} onChange={event => setLinkLabel(event.target.value)}
+                                placeholder="Portfolio" required
+                                className="mt-1 block w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm" />
+                        </label>
+                        <label className="flex-1 min-w-[200px] text-xs text-foreground">
+                            Website URL
+                            <input value={linkUrl} onChange={event => setLinkUrl(event.target.value)}
+                                placeholder="https://yourwebsite.com" required inputMode="url"
+                                aria-describedby={linkError ? "resume-link-error" : undefined}
+                                className="mt-1 block w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm" />
+                        </label>
+                        <button type="submit" className="rounded-md bg-primary px-3 py-2 text-sm text-white">Insert link</button>
+                        <button type="button" onClick={() => { setShowLinkForm(false); editorRef.current?.focus(); }}
+                            className="rounded-md border border-border px-3 py-2 text-sm text-foreground">Cancel</button>
+                    </div>
+                    {linkError && <p id="resume-link-error" role="alert" className="text-xs text-danger">{linkError}</p>}
+                </form>
+            )}
+
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">
                 <AnimatePresence mode="wait">
@@ -715,12 +778,17 @@ export default function ResumePreview({
                                     contentEditable
                                     suppressContentEditableWarning
                                     onInput={handleEditorInput}
+                                    role="textbox"
+                                    aria-label="Edit amplified resume"
+                                    aria-multiline="true"
                                     className="whitespace-pre-wrap text-sm leading-relaxed outline-none min-h-[300px] focus:ring-2 focus:ring-primary/20 rounded-lg p-2 -m-2 transition-all"
                                     style={{ caretColor: "var(--color-primary)" }}
                                 />
                             ) : (
                                 <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                                    <ReactMarkdown>{amplifiedText || originalText}</ReactMarkdown>
+                                    <ReactMarkdown components={{
+                                        a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>,
+                                    }}>{amplifiedText || originalText}</ReactMarkdown>
                                 </div>
                             )}
                         </motion.div>

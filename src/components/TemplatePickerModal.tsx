@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TEMPLATES, getTemplate, type TemplateId, type ResumeTemplate } from "@/lib/resumeTemplates";
+import { parseResumeInline } from "@/lib/resumeLinks";
 
 // ── Line classification helpers ───────────────────────────────────────────────
 
@@ -18,6 +19,7 @@ const isBulletLine = (line: string): boolean => /^\s*[•\-\*▪◦–■❖→�
 
 const isContactLine = (line: string): boolean => {
     const t = line.trim();
+    if (parseResumeInline(t).some(segment => segment.url)) return true;
     return /[@]/.test(t) ||
         /\b\d{3}[\s\-.)]{0,2}\d{3}[\s\-.)]{0,2}\d{4}\b/.test(t) ||
         /\b(linkedin|github|portfolio|www\.)\b/i.test(t) ||
@@ -35,8 +37,13 @@ const isSubHeaderLine = (line: string, index: number): boolean => {
 
 const stripBold = (text: string): string => text.replace(/\*\*(.+?)\*\*/g, '$1');
 
-const toBoldHTML = (text: string): string =>
-    text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+const renderInline = (text: string): React.ReactNode =>
+    parseResumeInline(text).map((segment, index) => {
+        const label = segment.bold ? <strong>{segment.text}</strong> : segment.text;
+        return segment.url
+            ? <a key={index} href={segment.url} target="_blank" rel="noopener noreferrer" className="underline">{label}</a>
+            : <React.Fragment key={index}>{label}</React.Fragment>;
+    });
 
 const extractDateFromLine = (text: string): { title: string; date: string } => {
     const dateRegex = /((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*\d{4}\s*[–\-—]\s*(Present|(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*\d{4})|\d{4}\s*[–\-—]\s*(Present|\d{4}))/i;
@@ -195,7 +202,7 @@ function LiveResumePreview({ text, template }: { text: string; template: ResumeT
                     fontFamily: s.fontFamily,
                     marginBottom: '4px',
                 }}>
-                    {stripBold(trimmed)}
+                    {renderInline(trimmed)}
                 </div>
             );
         }
@@ -209,7 +216,7 @@ function LiveResumePreview({ text, template }: { text: string; template: ResumeT
                     fontFamily: s.fontFamily,
                     marginBottom: '2px',
                 }}>
-                    {stripBold(trimmed)}
+                    {renderInline(trimmed)}
                 </div>
             );
         }
@@ -246,7 +253,7 @@ function LiveResumePreview({ text, template }: { text: string; template: ResumeT
                     gap: '4px',
                 }}>
                     <span style={{ flexShrink: 0 }}>•</span>
-                    <span dangerouslySetInnerHTML={{ __html: toBoldHTML(bulletContent) }} />
+                    <span>{renderInline(bulletContent)}</span>
                 </div>
             );
         }
@@ -265,7 +272,7 @@ function LiveResumePreview({ text, template }: { text: string; template: ResumeT
                     justifyContent: 'space-between',
                     gap: '8px',
                 }}>
-                    <span dangerouslySetInnerHTML={{ __html: toBoldHTML(title || stripBold(trimmed)) }} />
+                    <span>{renderInline(title || stripBold(trimmed))}</span>
                     {date && (
                         <span style={{ fontWeight: '400', color: '#999', flexShrink: 0, fontSize: '9.5px' }}>
                             {date}
@@ -283,9 +290,9 @@ function LiveResumePreview({ text, template }: { text: string; template: ResumeT
                 fontFamily: s.fontFamily,
                 lineHeight: s.lineHeight,
                 marginBottom: '2px',
-            }}
-                dangerouslySetInnerHTML={{ __html: toBoldHTML(trimmed) }}
-            />
+            }}>
+                {renderInline(trimmed)}
+            </div>
         );
     };
 
