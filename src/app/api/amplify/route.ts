@@ -1,3 +1,4 @@
+import { getAIErrorResponse } from "@/lib/aiErrors";
 import { NextRequest, NextResponse } from "next/server";
 import { amplifyResume } from "@/lib/ai";
 import { createClient } from "@/utils/supabase/server";
@@ -23,12 +24,11 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        if (!process.env.GEMINI_API_KEY) {
+        if (!process.env.GEMINI_API_KEY?.trim()) {
             return NextResponse.json(
                 {
-                    error: "API key not configured",
-                    message:
-                        "Please add your GEMINI_API_KEY to .env.local to use AI features.",
+                    error: "AI_UNAVAILABLE",
+                    message: "Resume optimization is currently unavailable. Please contact support or try again later.",
                 },
                 { status: 503 }
             );
@@ -39,11 +39,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(result);
     } catch (error) {
         console.error("Amplification error:", error);
-        const message =
-            error instanceof Error ? error.message : "Unknown error occurred";
+        const { code, message, status } = getAIErrorResponse(error);
         return NextResponse.json(
-            { error: "Amplification failed", message },
-            { status: 500 }
+            { error: code, message },
+            { status }
         );
     }
 }

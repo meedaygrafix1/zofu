@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "test:pdf-build": "node scripts/check-pdf-build.mjs",
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "npm run test:pdf-build",
     "start": "next start",
     "lint": "eslint"
   },

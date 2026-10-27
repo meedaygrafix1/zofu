@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractTextFromPDF } from "@/lib/ai";
+import { getPDFErrorResponse } from "@/lib/pdfErrors";
 import { createClient } from "@/utils/supabase/server";
+
+export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
     try {
@@ -29,6 +32,13 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        if (file.size > 5 * 1024 * 1024) {
+            return NextResponse.json(
+                { error: "File size must be under 5MB" },
+                { status: 400 }
+            );
+        }
+
         const buffer = Buffer.from(await file.arrayBuffer());
         const { text, pages } = await extractTextFromPDF(buffer);
 
@@ -37,11 +47,12 @@ export async function POST(request: NextRequest) {
             pages,
             info: {},
         });
-    } catch (error: any) {
-        console.error("PDF parsing error:", error?.message || error);
+    } catch (error: unknown) {
+        console.error("PDF parsing error:", error);
+        const { message, status } = getPDFErrorResponse(error);
         return NextResponse.json(
-            { error: `Failed to parse PDF: ${error?.message || "Unknown error"}` },
-            { status: 500 }
+            { error: message },
+            { status }
         );
     }
 }

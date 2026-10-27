@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractTextFromPDF } from "@/lib/ai";
+import { getPDFErrorResponse } from "@/lib/pdfErrors";
 import { createClient } from "@/utils/supabase/server";
 
-// Force Node.js runtime — this route uses native require() to load pdf-parse
-// and must never run on the Edge runtime which lacks Node module support.
+// Local PDF extraction requires Node.js.
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
@@ -53,11 +53,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ text, pages });
     } catch (error) {
         console.error("PDF parse error:", error);
-        const message =
-            error instanceof Error ? error.message : "Unknown error occurred";
+        const { message, status } = getPDFErrorResponse(error);
         return NextResponse.json(
-            { error: "Failed to parse PDF", message },
-            { status: 500 }
+            { error: message, message },
+            { status }
         );
     }
 }

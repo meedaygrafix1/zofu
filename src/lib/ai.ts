@@ -1,3 +1,6 @@
+import { isAIPaymentRequiredError, isAISpendLimitError } from "./aiErrors";
+import { PDF_AI_UNAVAILABLE, PDFExtractionError } from "./pdfErrors";
+import { isPDFPageBlank } from "./pdfBlankPages";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { jsonrepair } from "jsonrepair";
 import {
@@ -8,7 +11,7 @@ import {
 } from "./prompts";
 
 function getClient() {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
     if (!apiKey) {
         throw new Error("GEMINI_API_KEY is not configured");
     }
@@ -62,6 +65,7 @@ async function withRetry<T>(
         try {
             return await operation();
         } catch (error: any) {
+            if (isAISpendLimitError(error) || isAIPaymentRequiredError(error)) throw error;
             attempt++;
             const errorMessage = error?.message || "";
             const isFetchError = errorMessage.includes('fetch failed') ||
@@ -83,6 +87,12 @@ async function withRetry<T>(
         }
     }
     throw new Error("AI operation failed after maximum retries.");
+}
+
+export interface TokenUsage {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
 }
 
 export interface AmplifyResult {
@@ -163,40 +173,90 @@ export async function generateInterviewQuestions(
 
 export async function extractTextFromPDF(
     pdfBuffer: Buffer
-): Promise<{ text: string; pages: number }> {
-    // Use Gemini's native PDF understanding via inline data.
-    // This approach requires zero native Node.js modules — no pdf-parse,
-    // no pdfjs-dist, no DOMMatrix polyfills, no bundler workarounds.
-    // It also handles scanned/image-based PDFs that text extractors miss.
-    const client = getClient();
-    const model = client.getGenerativeModel({ model: getModel() });
-
-    const base64 = pdfBuffer.toString("base64");
-
-    const result = await withRetry(() =>
-        model.generateContent([
-            {
-                inlineData: {
-                    mimeType: "application/pdf",
-                    data: base64,
-                },
-            },
-            "Extract all text content from this PDF document. Return ONLY the raw text content, preserving paragraphs and structure. Do not add any commentary, headings, or formatting of your own.",
-        ])
-    );
-
-    const text = result.response.text()?.trim();
-
-    if (!text) {
-        throw new Error(
-            "No readable text found in PDF. The file may be empty or corrupted."
-        );
+): Promise<{ text: string; pages: number; tokenUsage?: TokenUsage }> {
+    // Ordinary PDFs can be read without an AI request. Keep Gemini as a
+    // fallback for scans (including PDFs with a mix of text and scanned pages).
+    let pages = 1;
+    try {
+        const { PDFParse } = await import("pdf-parse");
+        const parser = new PDFParse({ data: pdfBuffer });
+        try {
+            const result = await parser.getText({ pageJoiner: "" });
+            pages = result.total;
+            const text = result.text.trim();
+            let needsOCR = false;
+            for (const page of result.pages) {
+                if (!page.text.trim() && !(await isPDFPageBlank(parser, page.num))) {
+                    needsOCR = true;
+                    break;
+                }
+            }
+            if (text && !needsOCR) {
+                return { text, pages };
+            }
+            if (!text && !needsOCR) {
+                throw new PDFExtractionError("No readable text found in PDF. Please upload a document containing text.", 422);
+            }
+        } finally {
+            // Cleanup must not discard successfully extracted text.
+            await parser.destroy().catch(() => console.warn("[PDF] Parser cleanup failed."));
+        }
+    } catch (error) {
+        if (error instanceof PDFExtractionError) throw error;
+        if (error instanceof Error && error.name === "PasswordException") {
+            throw new PDFExtractionError("This PDF is password-protected. Please upload an unlocked copy.", 422, { cause: error });
+        }
+        if (error instanceof Error && error.name === "InvalidPDFException") {
+            throw new PDFExtractionError("This PDF is damaged or invalid. Please export it again and retry.", 422, { cause: error });
+        }
+        console.warn("[PDF] Local extraction failed; trying AI extraction.", error instanceof Error ? error.name : "Unknown error");
     }
 
-    return {
-        text,
-        pages: 1, // Page count not required downstream; Gemini reads the full doc
-    };
+    if (!process.env.GEMINI_API_KEY?.trim()) {
+        throw new PDFExtractionError(PDF_AI_UNAVAILABLE, 503, {
+            cause: new Error("GEMINI_API_KEY is not configured"),
+        });
+    }
+
+    try {
+        const client = getClient();
+        const model = client.getGenerativeModel({ model: getModel() });
+        const result = await withRetry(() =>
+            model.generateContent([
+                {
+                    inlineData: {
+                        mimeType: "application/pdf",
+                        data: pdfBuffer.toString("base64"),
+                    },
+                },
+                "Extract all text content from this PDF document. Return ONLY the raw text content, preserving paragraphs and structure. Do not add any commentary, headings, or formatting of your own.",
+            ])
+        );
+
+        const text = result.response.text()?.trim();
+        const usage = result.response.usageMetadata;
+
+        if (!text) {
+            throw new PDFExtractionError(
+                "No readable text found in PDF. The file may be empty or corrupted.",
+                422
+            );
+        }
+
+        return {
+            text,
+            pages,
+            tokenUsage: {
+                inputTokens: usage?.promptTokenCount ?? 0,
+                outputTokens: usage?.candidatesTokenCount ?? 0,
+                totalTokens: usage?.totalTokenCount ?? 0,
+            },
+        };
+    } catch (error) {
+        if (error instanceof PDFExtractionError) throw error;
+        // This also covers blocked responses whose text() accessor throws.
+        throw new PDFExtractionError(PDF_AI_UNAVAILABLE, 503, { cause: error });
+    }
 }
 
 
